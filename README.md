@@ -106,8 +106,8 @@ notify the main researcher.
 
 Annotation 5 marks the moment the experiment's temperature falls out-of-range, which requires
 notifying the researcher through the notifications service. The remaining measurements which
-are out-of-range until the temperature stabilizes again do not have to be notified, only the
-measurement taken at Annotation 5.
+are out-of-range until the temperature stabilizes again are not notified, only
+the measurement taken at Annotation 5.
 
 Annotation 6 marks the moment the Experiment Terminated Event is published indicating the
 end of the experiment. From this moment onward, no more measurement or data referring to
@@ -540,7 +540,7 @@ We will provide you with the other external services so you can test how your sy
 - A load generator for your kafka topic that publishes the streams of events for an experiment.
 - A notification service for your microservice to notify a researcher.
 
-You may find these external services in [this repository](https://github.com/landaudiogo/cc-assignment-2023).
+You may find these external services in [this repository](https://github.com/EC-labs/cec-assignment).
 
 # Evaluation
 
@@ -561,9 +561,6 @@ The demo will be split into 3 different parts:
   beforehand, and therefore, the architecture is expected to be flexible to
   different workload intensities. We will evaluate your microservice's
   performance based on notification latency (<= 10s).
-
-Bonus:
-- If your implementation can maintain a notification latency < 10s throughout the whole stress test.
 
 ## Architecture Assessment
 
