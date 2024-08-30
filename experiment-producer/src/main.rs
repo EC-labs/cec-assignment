@@ -1,6 +1,5 @@
 use ::time::{format_description, UtcOffset};
-use clap::{command, value_parser, Arg, ArgAction, ArgMatches};
-use dotenv;
+use clap::{builder::FalseyValueParser, command, value_parser, Arg, ArgAction, ArgMatches};
 use futures::future;
 use sqlx::{
     postgres::{PgPoolOptions, Postgres},
@@ -34,6 +33,7 @@ async fn run_single_experiment(
             .remove_one::<String>("broker-list")
             .expect("required"),
         metrics.clone(),
+        !matches.remove_one::<bool>("no-ssl").unwrap(),
     );
 
     let experiment_config = ExperimentConfiguration::new(
@@ -103,6 +103,7 @@ async fn run_multiple_experiments(
         let topic_producer = KafkaTopicProducer::new(
             &matches.get_one::<String>("broker-list").expect("required"),
             metrics.clone(),
+            !*matches.get_one::<bool>("no-ssl").unwrap(),
         );
 
         let span = span!(
@@ -132,7 +133,6 @@ async fn run_multiple_experiments(
 }
 
 fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
-    dbg!(file_subscriber);
     let mut layers = vec![];
 
     let offset = UtcOffset::from_hms(2, 0, 0).expect("Should get CET offset");
@@ -152,7 +152,11 @@ fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
                 .with_writer(non_blocking)
                 .with_timer(timer.clone())
                 .json()
-                .with_filter(LevelFilter::DEBUG)
+                .with_filter(
+                    EnvFilter::builder()
+                        .with_default_directive(LevelFilter::INFO.into())
+                        .from_env_lossy(),
+                )
                 .boxed(),
         );
         Some(_guard)
@@ -262,8 +266,18 @@ fn configure_cli() -> ArgMatches {
             Arg::new("file-subscriber")
                 .required(false)
                 .long("file-subscriber")
-                .action(ArgAction::SetFalse)
+                .action(ArgAction::SetTrue)
+                .default_value("false")
                 .help("Whether a tracing subscriber should be created to persist the experiment-producer logs"),
+        )
+        .arg(
+            Arg::new("no-ssl")
+                .required(false)
+                .long("no-ssl")
+                .action(ArgAction::SetTrue)
+                .default_value("false")
+                .value_parser(FalseyValueParser::new())
+                .help("Producer connects with broker with SSL protocol"),
         )
         .get_matches()
 }

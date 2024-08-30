@@ -8,7 +8,7 @@ use rdkafka::{
 };
 use std::collections::HashMap;
 use std::{fs, time::Duration};
-use tracing::{debug, span, Level, Span};
+use tracing::{debug, info, span, Level, Span};
 use uuid::Uuid;
 
 use event_hash::{HashData, NotificationType};
@@ -347,22 +347,28 @@ pub struct KafkaTopicProducer {
 }
 
 impl KafkaTopicProducer {
-    pub fn new(brokers: &str, metrics: Metrics) -> Self {
-        let producer: FutureProducer = ClientConfig::new()
-            .set("security.protocol", "SSL")
-            .set("ssl.ca.location", "experiment-producer/auth/ca.crt")
-            .set(
-                "ssl.keystore.location",
-                "experiment-producer/auth/kafka.keystore.pkcs12",
-            )
-            .set("ssl.keystore.password", "cc2023")
+    pub fn new(brokers: &str, metrics: Metrics, use_ssl: bool) -> Self {
+        let mut client_config = ClientConfig::new();
+        client_config
             .set("bootstrap.servers", brokers)
             .set("message.timeout.ms", "5000")
             .set("linger.ms", "100")
             .set("queue.buffering.max.kbytes", "8388608")
-            .set("queue.buffering.max.messages", "1000000")
-            .create()
-            .expect("Producer creation error");
+            .set("queue.buffering.max.messages", "1000000");
+
+        if use_ssl {
+            info!("Client configured with SSL");
+            client_config
+                .set("security.protocol", "SSL")
+                .set("ssl.ca.location", "experiment-producer/auth/ca.crt")
+                .set(
+                    "ssl.keystore.location",
+                    "experiment-producer/auth/kafka.keystore.pkcs12",
+                )
+                .set("ssl.keystore.password", "cc2023");
+        }
+
+        let producer: FutureProducer = client_config.create().expect("Producer creation error");
 
         // For some reason this is required so the first level
         // span is printed to stdout. This happens because of the
