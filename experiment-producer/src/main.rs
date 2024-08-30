@@ -10,7 +10,7 @@ use std::env;
 use tokio::time::{self as tktime, Duration};
 use tracing::{info, span, Instrument, Level};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{filter::LevelFilter, fmt::time::OffsetTime, prelude::*};
+use tracing_subscriber::{filter::LevelFilter, fmt::time::OffsetTime, prelude::*, EnvFilter};
 
 mod config;
 mod database;
@@ -33,15 +33,12 @@ async fn run_single_experiment(
         &matches
             .remove_one::<String>("broker-list")
             .expect("required"),
-        metrics,
+        metrics.clone(),
     );
 
     let experiment_config = ExperimentConfiguration::new(
         "d.landau@uu.nl".into(),
-        matches
-            .remove_one::<u8>("num-sensors")
-            .expect("required")
-            .into(),
+        matches.remove_one::<u32>("num-sensors").expect("required") as usize,
         matches.remove_one::<u64>("sample-rate").expect("required"),
         TempRange::new(
             matches
@@ -74,24 +71,22 @@ async fn run_single_experiment(
         "experiment",
         experiment_id = experiment_config.experiment_id
     );
-    let mut experiment =
-        Experiment::new(start_temperature, experiment_config, topic_producer, pool);
+    let mut experiment = Experiment::new(
+        start_temperature,
+        experiment_config,
+        topic_producer,
+        pool,
+        metrics,
+    );
     experiment.run().instrument(span).await;
 }
 
 async fn run_multiple_experiments(
-    mut matches: ArgMatches,
+    matches: ArgMatches,
     config_file: &str,
     pool: Option<Pool<Postgres>>,
     metrics: Metrics,
 ) {
-    let topic_producer = KafkaTopicProducer::new(
-        &matches
-            .remove_one::<String>("broker-list")
-            .expect("required"),
-        metrics,
-    );
-
     let config = ConfigFile::from_file(config_file);
     let mut handles = vec![];
     for mut entry in config.0 {
@@ -105,7 +100,10 @@ async fn run_multiple_experiments(
                 .map(|topic| topic.as_str()),
         );
         let experiment_config = ExperimentConfiguration::from(entry);
-        let topic_producer = topic_producer.clone();
+        let topic_producer = KafkaTopicProducer::new(
+            &matches.get_one::<String>("broker-list").expect("required"),
+            metrics.clone(),
+        );
 
         let span = span!(
             Level::INFO,
@@ -113,12 +111,18 @@ async fn run_multiple_experiments(
             experiment_id = experiment_config.experiment_id
         );
         let pool = pool.clone();
+        let metrics = metrics.clone();
         handles.push(tokio::spawn(
             async move {
                 tktime::sleep(Duration::from_millis(start_offset * 1000)).await;
 
-                let mut experiment =
-                    Experiment::new(start_temperature, experiment_config, topic_producer, pool);
+                let mut experiment = Experiment::new(
+                    start_temperature,
+                    experiment_config,
+                    topic_producer,
+                    pool,
+                    metrics,
+                );
                 experiment.run().await;
             }
             .instrument(span),
@@ -127,7 +131,8 @@ async fn run_multiple_experiments(
     future::join_all(handles).await;
 }
 
-fn configure_tracing() -> WorkerGuard {
+fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
+    dbg!(file_subscriber);
     let mut layers = vec![];
 
     let offset = UtcOffset::from_hms(2, 0, 0).expect("Should get CET offset");
@@ -137,24 +142,33 @@ fn configure_tracing() -> WorkerGuard {
     .expect("format string should be valid");
     let timer = OffsetTime::new(offset, time_format);
 
-    let file_appender = tracing_appender::rolling::daily("./", "producer.json.log");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    let _guard = if file_subscriber {
+        let file_appender = tracing_appender::rolling::daily("./", "producer.json.log");
+        let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
-    layers.push(
-        tracing_subscriber::fmt::layer()
-            .with_target(true)
-            .with_writer(non_blocking)
-            .with_timer(timer.clone())
-            .json()
-            .with_filter(LevelFilter::DEBUG)
-            .boxed(),
-    );
+        layers.push(
+            tracing_subscriber::fmt::layer()
+                .with_target(true)
+                .with_writer(non_blocking)
+                .with_timer(timer.clone())
+                .json()
+                .with_filter(LevelFilter::DEBUG)
+                .boxed(),
+        );
+        Some(_guard)
+    } else {
+        None
+    };
 
     layers.push(
         tracing_subscriber::fmt::layer()
             .with_target(true)
             .with_timer(timer)
-            .with_filter(LevelFilter::INFO)
+            .with_filter(
+                EnvFilter::builder()
+                    .with_default_directive(LevelFilter::INFO.into())
+                    .from_env_lossy(),
+            )
             .boxed(),
     );
 
@@ -195,7 +209,7 @@ fn configure_cli() -> ArgMatches {
             .long("num-sensors")
             .default_value("2")
             .action(ArgAction::Set)
-            .value_parser(value_parser!(u8))
+            .value_parser(value_parser!(u32))
         )
         .arg(Arg::new("sample-rate")
             .required(false)
@@ -244,14 +258,21 @@ fn configure_cli() -> ArgMatches {
             .action(ArgAction::Set)
             .long("topic-document")
         )
+        .arg(
+            Arg::new("file-subscriber")
+                .required(false)
+                .long("file-subscriber")
+                .action(ArgAction::SetFalse)
+                .help("Whether a tracing subscriber should be created to persist the experiment-producer logs"),
+        )
         .get_matches()
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
     dotenv::from_filename("experiment-producer/.env").expect(".env file should exist");
-    let _guard = configure_tracing();
     let mut matches = configure_cli();
+    let _guard = configure_tracing(matches.remove_one::<bool>("file-subscriber").unwrap());
 
     let pool = match env::var("DATABASE_URL") {
         Ok(database_url) => {

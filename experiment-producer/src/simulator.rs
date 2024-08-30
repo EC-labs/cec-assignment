@@ -3,16 +3,17 @@ use rand::Rng;
 use rdkafka::message::OwnedHeaders;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::{task::JoinHandle, time};
-use tracing::{info, Instrument, Span};
+use tracing::{debug, info, Instrument, Span};
 use uuid::Uuid;
 
 use event_hash::NotificationType;
 
 use crate::config::{ConfigEntry, UncheckedTempRange};
 use crate::database;
-use crate::events::{self, EventWrapper, KafkaTopicProducer, RecordData};
+use crate::events::{self, EventWrapper, ExperimentSchemas, KafkaTopicProducer, RecordData};
+use crate::metric::Metrics;
 
 #[derive(Clone, Copy)]
 pub enum ExperimentStage {
@@ -175,12 +176,14 @@ impl From<ConfigEntry> for ExperimentConfiguration {
 }
 
 pub struct Experiment {
+    experiment_schemas: ExperimentSchemas,
     sample: TemperatureSample,
     measurements: Vec<Measurement>,
     stage: ExperimentStage,
     config: ExperimentConfiguration,
     producer: KafkaTopicProducer,
     pool: Option<Pool<Postgres>>,
+    metrics: Metrics,
 }
 
 impl Experiment {
@@ -189,25 +192,29 @@ impl Experiment {
         config: ExperimentConfiguration,
         producer: KafkaTopicProducer,
         pool: Option<Pool<Postgres>>,
+        metrics: Metrics,
     ) -> Self {
+        metrics.experiment_gauge.inc();
         let sample = TemperatureSample {
             cur: start,
             temp_range: config.temp_range,
         };
         Experiment {
+            experiment_schemas: ExperimentSchemas::new(),
             stage: ExperimentStage::Uninitialized,
             measurements: Vec::new(),
             sample,
             producer,
             config,
             pool,
+            metrics,
         }
     }
 
     async fn stage_configuration(&mut self) {
         self.stage = ExperimentStage::Configuration;
         let record = RecordData {
-            payload: events::experiment_configured_event(
+            payload: self.experiment_schemas.experiment_configured_event(
                 &self.config.experiment_id,
                 &self.config.researcher,
                 &self.config.sensors,
@@ -225,7 +232,9 @@ impl Experiment {
     async fn stage_stabilization(&mut self) {
         self.stage = ExperimentStage::Stabilization;
         let record = RecordData {
-            payload: events::stabilization_started_event(&self.config.experiment_id),
+            payload: self
+                .experiment_schemas
+                .stabilization_started_event(&self.config.experiment_id),
             key: Some(&self.config.experiment_id),
             headers: OwnedHeaders::new().add("record_name", "stabilization_started"),
         };
@@ -239,6 +248,7 @@ impl Experiment {
             .sample
             .stabilization_samples(self.config.stabilization_samples.into());
         let stabilization_events = events::temperature_events(
+            &mut self.experiment_schemas,
             stabilization_samples,
             &self.config.experiment_id,
             &self.config.researcher,
@@ -264,7 +274,9 @@ impl Experiment {
     async fn stage_carry_out(&mut self) {
         self.stage = ExperimentStage::CarryOut;
         let record = RecordData {
-            payload: events::experiment_started_event(&self.config.experiment_id),
+            payload: self
+                .experiment_schemas
+                .experiment_started_event(&self.config.experiment_id),
             key: Some(&self.config.experiment_id),
             headers: OwnedHeaders::new().add("record_name", "experiment_started"),
         };
@@ -277,6 +289,7 @@ impl Experiment {
             .sample
             .carry_out_samples(self.config.carry_out_samples.into());
         let carry_out_events = events::temperature_events(
+            &mut self.experiment_schemas,
             carry_out_samples,
             &self.config.experiment_id,
             &self.config.researcher,
@@ -300,7 +313,9 @@ impl Experiment {
 
         self.stage = ExperimentStage::Terminated;
         let record = RecordData {
-            payload: events::experiment_terminated_event(&self.config.experiment_id),
+            payload: self
+                .experiment_schemas
+                .experiment_terminated_event(&self.config.experiment_id),
             key: Some(&self.config.experiment_id),
             headers: OwnedHeaders::new().add("record_name", "experiment_terminated"),
         };
@@ -311,7 +326,7 @@ impl Experiment {
 
         if let Some(topic_document) = &self.config.topic_document {
             let record = RecordData {
-                payload: events::experiment_document_event(
+                payload: self.experiment_schemas.experiment_document_event(
                     &self.config.experiment_id,
                     &self.measurements,
                     self.config.temp_range,
@@ -327,13 +342,27 @@ impl Experiment {
     }
 
     pub async fn run(&mut self) {
+        let start = Instant::now();
         info!(stage = "configuration");
         self.stage_configuration().await;
-        time::sleep(Duration::from_millis(2000)).await;
         info!(stage = "stabilization");
+        let stabilization = Instant::now();
         self.stage_stabilization().await;
         info!(stage = "carry out");
+        let carry_out = Instant::now();
         self.stage_carry_out().await;
+        info!(
+            stage = "terminated",
+            elapsed = start.elapsed().as_millis(),
+            stabilization = (carry_out - stabilization).as_millis(),
+            carry_out = carry_out.elapsed().as_millis()
+        );
+    }
+}
+
+impl Drop for Experiment {
+    fn drop(&mut self) {
+        self.metrics.experiment_gauge.dec();
     }
 }
 
@@ -433,7 +462,7 @@ impl<'a> Iterator for IterMut<'a> {
         } else {
             self.sample.clone()
         };
-        info!(avg_temperature = ret.cur);
+        debug!(avg_temperature = ret.cur);
         Some(ret)
     }
 }
@@ -448,14 +477,14 @@ pub fn compute_sensor_temperatures(
         .map(|sensor_id| {
             let relative_diff = rand::thread_rng().gen_range(-100.0..100.0);
             let sensor_temperature = average_temperature + relative_diff * 1.0 / 100.0;
-            info!(sensor = sensor_id, temperature = sensor_temperature);
+            debug!(sensor = sensor_id, temperature = sensor_temperature);
             cumulative_temperature += sensor_temperature;
             (&**sensor_id, sensor_temperature)
         })
         .collect::<Vec<(&'_ str, f32)>>();
     let sensor_id = &sensors[sensors.len() - 1];
     let sensor_temperature = (sensors.len() as f32) * average_temperature - cumulative_temperature;
-    info!(sensor = sensor_id, temperature = sensor_temperature);
+    debug!(sensor = sensor_id, temperature = sensor_temperature);
     sensor_events.push((sensor_id, sensor_temperature));
     sensor_events
 }

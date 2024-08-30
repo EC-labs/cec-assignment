@@ -1,7 +1,7 @@
 use actix_web::{get, web::Data, App, HttpServer, Responder};
 use prometheus_client::{
     encoding::{text, EncodeLabelSet},
-    metrics::{counter::Counter, family::Family},
+    metrics::{counter::Counter, family::Family, gauge::Gauge},
     registry::Registry,
 };
 use std::sync::Mutex;
@@ -16,12 +16,14 @@ pub struct EventCountLabels {
 #[derive(Clone)]
 pub struct Metrics {
     pub event_count: Family<EventCountLabels, Counter>,
+    pub experiment_gauge: Gauge,
 }
 
 impl Metrics {
     pub fn new() -> Self {
         Self {
             event_count: Family::<EventCountLabels, Counter>::default(),
+            experiment_gauge: Gauge::default(),
         }
     }
 }
@@ -37,6 +39,11 @@ impl MetricServer {
             "experiment_producer_event_count",
             "Count of events produced",
             metrics.event_count.clone(),
+        );
+        registry.register(
+            "experiment_producer_num_experiments",
+            "Number of experiments running",
+            metrics.experiment_gauge.clone(),
         );
         Self { registry }
     }
