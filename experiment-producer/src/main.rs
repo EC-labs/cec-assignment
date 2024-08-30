@@ -92,8 +92,8 @@ async fn run_multiple_experiments(
     for mut entry in config.0 {
         let start_temperature = entry.start_temperature;
         let start_offset = entry.start_time;
-        entry.set_secret_key(&matches.get_one::<String>("secret-key").expect("required"));
-        entry.set_topic(&matches.get_one::<String>("topic").expect("required"));
+        entry.set_secret_key(matches.get_one::<String>("secret-key").expect("required"));
+        entry.set_topic(matches.get_one::<String>("topic").expect("required"));
         entry.set_topic_document(
             matches
                 .get_one::<String>("topic-document")
@@ -101,7 +101,7 @@ async fn run_multiple_experiments(
         );
         let experiment_config = ExperimentConfiguration::from(entry);
         let topic_producer = KafkaTopicProducer::new(
-            &matches.get_one::<String>("broker-list").expect("required"),
+            matches.get_one::<String>("broker-list").expect("required"),
             metrics.clone(),
             !*matches.get_one::<bool>("no-ssl").unwrap(),
         );

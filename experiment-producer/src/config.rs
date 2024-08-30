@@ -14,8 +14,9 @@ pub struct ConfigFile(pub Vec<ConfigEntry>);
 
 impl ConfigFile {
     pub fn from_file(file_path: &str) -> Self {
-        let contents =
-            fs::read_to_string(file_path).expect(&format!("Could not read file `{}`", file_path));
+        let contents = fs::read_to_string(file_path)
+            .unwrap_or_else(|_| panic!("Could not read file `{}`", file_path));
+
         serde_json::from_str(&contents).expect("Could not deserialize config file")
     }
 }

@@ -36,18 +36,18 @@ impl std::error::Error for DecryptError {}
 
 impl std::fmt::Display for DecryptError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{:?}", self)
     }
 }
 
 impl HashData {
     pub fn decrypt(key: &[u8], hash_data: &str) -> Result<HashData, DecryptError> {
-        let cipher_components: Vec<_> = hash_data.split(".").collect();
+        let cipher_components: Vec<_> = hash_data.split('.').collect();
         if cipher_components.len() != 2 {
             return Err(DecryptError::MalformedHashDataString);
         }
         let key = Key::<Aes256Gcm>::from_slice(key);
-        let cipher = Aes256Gcm::new(&key);
+        let cipher = Aes256Gcm::new(key);
         let nonce = general_purpose::STANDARD_NO_PAD
             .decode(cipher_components[0])
             .map_err(|_| DecryptError::MalformedB64Nonce)?;
@@ -68,7 +68,7 @@ impl HashData {
 
     pub fn encrypt(&self, key: &[u8]) -> String {
         let key = Key::<Aes256Gcm>::from_slice(key);
-        let cipher = Aes256Gcm::new(&key);
+        let cipher = Aes256Gcm::new(key);
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng); // 96-bits; unique per message
         let ciphertext = cipher
             .encrypt(&nonce, serde_json::to_string(&self).unwrap().as_bytes())

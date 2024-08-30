@@ -46,7 +46,7 @@ impl ExperimentSchemas {
         &mut self,
         experiment_id: &str,
         researcher: &str,
-        sensors: &Vec<String>,
+        sensors: &[String],
         temp_range: TempRange,
     ) -> EventWrapper {
         let schema = self
@@ -60,19 +60,18 @@ impl ExperimentSchemas {
                         fs::read_to_string("experiment-producer/schemas/experiment_configured.avsc")
                             .unwrap()
                     });
-                Schema::parse_str(&raw_schema).unwrap()
+                Schema::parse_str(raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let mut record = Record::new(writer.schema()).unwrap();
         record.put("experiment", experiment_id);
         record.put("researcher", researcher);
-        let sensors = Value::Array(sensors.into_iter().map(|v| (&**v).into()).collect());
+        let sensors = Value::Array(sensors.iter().map(|v| (&**v).into()).collect());
         record.put("sensors", sensors);
 
         let schema_json: serde_json::Value = serde_json::from_str(
-            &self
-                .raw_schema
+            self.raw_schema
                 .get("experiment-producer/schemas/experiment_configured.avsc")
                 .unwrap(),
         )
@@ -99,7 +98,7 @@ impl ExperimentSchemas {
                         .unwrap();
                 Schema::parse_str(&raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let mut record = Record::new(writer.schema()).unwrap();
         record.put("experiment", experiment_id);
@@ -121,7 +120,7 @@ impl ExperimentSchemas {
                         .unwrap();
                 Schema::parse_str(&raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let mut record = Record::new(writer.schema()).unwrap();
         record.put("experiment", experiment_id);
@@ -143,7 +142,7 @@ impl ExperimentSchemas {
                         .unwrap();
                 Schema::parse_str(&raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let mut record = Record::new(writer.schema()).unwrap();
         record.put("experiment", experiment_id);
@@ -174,7 +173,7 @@ impl ExperimentSchemas {
                 .unwrap();
                 Schema::parse_str(&raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let mut record = Record::new(writer.schema()).unwrap();
         record.put("experiment", experiment);
@@ -192,7 +191,7 @@ impl ExperimentSchemas {
     pub fn experiment_document_event(
         &mut self,
         experiment_id: &str,
-        measurements: &Vec<Measurement>,
+        measurements: &[Measurement],
         temp_range: TempRange,
     ) -> EventWrapper {
         let schema = self
@@ -204,7 +203,7 @@ impl ExperimentSchemas {
                         .unwrap();
                 Schema::parse_str(&raw_schema).unwrap()
             });
-        let mut writer = Writer::new(&schema, Vec::new());
+        let mut writer = Writer::new(schema, Vec::new());
 
         let schema_json: serde_json::Value =
             serde_json::from_str(&schema.canonical_form()).unwrap();
@@ -218,7 +217,7 @@ impl ExperimentSchemas {
         record.put("experiment", experiment_id);
         let measurements = Value::Array(
             measurements
-                .into_iter()
+                .iter()
                 .map(|measurement| {
                     let mut record =
                         Record::new(&measurement_schema).expect("Valid measurement schema");
@@ -287,7 +286,7 @@ pub fn temperature_events<'b>(
     sample_iter: IterMut<'b>,
     experiment_id: &'b str,
     researcher: &'b str,
-    sensors: &'b Vec<String>,
+    sensors: &'b [String],
     stage: &'b ExperimentStage,
     secret_key: &'b str,
 ) -> Box<dyn Iterator<Item = (Vec<EventWrapper>, Span, Measurement)> + 'b + Send> {
@@ -299,7 +298,7 @@ pub fn temperature_events<'b>(
         let _enter = span.enter();
         let current_time = time::current_epoch();
 
-        let notification_type = compute_notification_type(sample, prev_sample, &stage);
+        let notification_type = compute_notification_type(sample, prev_sample, stage);
         let hash_data = HashData {
             notification_type: notification_type.clone(),
             timestamp: current_time,
@@ -316,7 +315,7 @@ pub fn temperature_events<'b>(
         let measurement_hash = hash_data.encrypt(secret_key.as_bytes());
         prev_sample = Some(sample);
 
-        let sensor_events = simulator::compute_sensor_temperatures(&sensors, sample.cur())
+        let sensor_events = simulator::compute_sensor_temperatures(sensors, sample.cur())
             .into_iter()
             .map(|(sensor_id, sensor_temperature)| {
                 experiment_schemas.temperature_measured_event(
@@ -330,7 +329,7 @@ pub fn temperature_events<'b>(
             })
             .collect();
         drop(_enter);
-        return (sensor_events, span, measurement);
+        (sensor_events, span, measurement)
     }))
 }
 
@@ -413,7 +412,6 @@ impl KafkaTopicProducer {
                 "{:?}",
                 Reader::new(record.payload.to_bytes())
                     .unwrap()
-                    .into_iter()
                     .map(|value| value.unwrap())
                     .collect::<Vec<apache_avro::types::Value>>()
             )

@@ -335,7 +335,7 @@ impl Experiment {
                 key: Some(&self.config.experiment_id),
             };
             self.producer
-                .send_event(record, &topic_document)
+                .send_event(record, topic_document)
                 .await
                 .expect("Failed to produce message");
         }
@@ -452,15 +452,15 @@ impl<'a> Iterator for IterMut<'a> {
         }
         self.iteration += 1;
         let ret = if (self.sample.cur - self.sample.temp_range.upper_threshold).abs() <= 0.01 {
-            let mut sample = self.sample.clone();
+            let mut sample = *self.sample;
             sample.cur = self.sample.temp_range.upper_threshold - 0.011;
             sample
         } else if (self.sample.cur - self.sample.temp_range.lower_threshold).abs() <= 0.01 {
-            let mut sample = self.sample.clone();
+            let mut sample = *self.sample;
             sample.cur = self.sample.temp_range.lower_threshold + 0.011;
             sample
         } else {
-            self.sample.clone()
+            *self.sample
         };
         debug!(avg_temperature = ret.cur);
         Some(ret)
@@ -468,12 +468,12 @@ impl<'a> Iterator for IterMut<'a> {
 }
 
 pub fn compute_sensor_temperatures(
-    sensors: &Vec<String>,
+    sensors: &[String],
     average_temperature: f32,
 ) -> Vec<(&'_ str, f32)> {
     let mut cumulative_temperature = 0.0;
     let mut sensor_events = sensors[..sensors.len() - 1]
-        .into_iter()
+        .iter()
         .map(|sensor_id| {
             let relative_diff = rand::thread_rng().gen_range(-100.0..100.0);
             let sensor_temperature = average_temperature + relative_diff * 1.0 / 100.0;
