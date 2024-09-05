@@ -547,7 +547,6 @@ You may find these external services in [this repository](https://github.com/EC-
 The assignment evaluation will consist of 3 components:
 - Demo 
 - Architecture Assessment
-- Report
 
 ## Demo
 
@@ -567,21 +566,6 @@ The demo will be split into 3 different parts:
 To evaluate the architecture, during the demo session there will be a short discussion to understand the main design decisions taken by your team, followed by a qualitative assessment of the arcthitecture included in the report based on the principles of:
 - Seperation of Concerns: Evaluates the modularity of your architecture, and whether each service has distinct responsibilities, or if it has too many responsibilities.
 - Scalability: Analysis of your microservice’s theoretical scale.
-
-## Report
-
-10 page maximum report.
-Sections: 
-- Problem Description: A description of the main problems your team focused on solving when coming up with a possible architecture.
-- Considerations and Trade-offs: The different solutions you considered to the problems you presented and their respective trade-offs.
-- Implementation Architecture: A description of the final architecture implemented for the assignment.
-- Results: Plots showing how your system performed throughout your own benchmarks and during the demo. You should include:
-  - HTTP server response time during the data consistency part of the demo;
-  - HTTP server response time during the stress test part of the demo;
-  - Architecture cost during the data consistency part of the demo (Memory and CPU usage);
-  - Architecture cost during the stress test part of the demo (Memory and CPU usage);
-- Future Work: What further improvements could be made to your architecture if your team had more time to dedicate to the project.
-- Learning Outcomes: Each team member should write a short paragraph. The paragraph should indicate what you feel were the most valuable learning outcomes through this assignment
 
 # Contact
 
