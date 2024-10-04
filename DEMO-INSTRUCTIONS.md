@@ -4,16 +4,16 @@ Follow these steps to prepare your setup for the demo:
 
    When performing a request to the `notifications-service` you should add a
    new query parameter that is used to identify your group. For this purpose, a
-   new file named `token` has been added to your group's one drive credentials
+   new file named `token` will be added to your group's one drive credentials
    folder. The contents of this file, is the value of the `token` query
    parameter you have to pass when notifying the `notifications-service`.
 
    Additionally, you also have to change the host to which you are sending the
-   request to `notifications-service.cc2023.4400app.me`.
+   request to `notifications-service.cec.4400app.me`.
 
    As such, when performing a request to the notifications-service, the url
    should look as follows:
-   `https://notifications-service.cc2023.4400app.me/api/notify?token=<your-token>`.
+   `https://notifications-service.cec.4400app.me/api/notify?token=<your-token>`.
 
    **You can keep sending the body as you were.**
 1. Your REST API should be reachable at `<your-vm-ip>:3003`. 
@@ -33,7 +33,7 @@ Follow these steps to prepare your setup for the demo:
 1. A grafana instance is provided so you can view the current perceived state
    of your infrastructure.
 
-   Visit `https://grafana.cc2023.4400app.me` and login with the credentials
+   Visit `https://grafana.cec.4400app.me` and login with the credentials
    provided in the `grafana` file in your group's credentials folder in one
    drive.
 1. Have your consumers read from the `experiment` topic instead of your group
