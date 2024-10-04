@@ -1,5 +1,5 @@
+use crate::consume::{Consume, ConsumeConfiguration};
 use clap::{command, Arg, ArgAction};
-use crate::{consume::{ConsumeConfiguration, Consume}};
 
 mod consume;
 
@@ -36,6 +36,12 @@ async fn main() {
             .required(true)
             .long("notifications-host")
             .action(ArgAction::Set)
+        )
+        .arg(Arg::new("token")
+            .required(true)
+            .long("token")
+            .action(ArgAction::Set)
+            .help("A string identifying the client making the request to the notifications-service")
         )
         .get_matches();
 

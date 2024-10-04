@@ -1,5 +1,6 @@
 use jsonwebtoken::{self, Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Claims {
@@ -10,8 +11,14 @@ pub struct Claims {
 impl Claims {
     #[allow(dead_code)]
     pub fn new(subject: String) -> Self {
+        let start = SystemTime::now();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+        let expiration_s = since_the_epoch.as_secs() + 60 * 60 * 24 * 100;
+
         Self {
-            exp: 1704129818,
+            exp: expiration_s as usize,
             sub: subject,
         }
     }

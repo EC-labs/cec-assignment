@@ -11,6 +11,8 @@ services:
       - "${TOPIC_DOCUMENT}"
       - "--group-id"
       - "${TOAPI_CONSUMER_GROUP}"
+      - "--token"
+      - "${NOTIFIER_TOKEN}"
     ports:
       - '3003:3003'
     extra_hosts: 

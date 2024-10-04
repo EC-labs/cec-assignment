@@ -10,7 +10,7 @@ tokio = { version = "1", features = ["full"]}
 rdkafka = { version = "0.25", features = ["cmake-build", "ssl"] }
 clap = { version = "4", features = ["derive", "cargo"]}
 apache-avro = "0.15"
-serde = { version = "1.0.183", features = ["derive"]}
+serde = { version = "1.0.183", features = ["derive", "rc"]}
 reqwest = { version = "0.11", features = ["json"] }
 rand = "0.8.2"
 

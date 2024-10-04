@@ -12,6 +12,7 @@ services:
       - experiment-producer-host:${EXPERIMENT_PRODUCER_HOST}
       - notifications-service-host:${NOTIFICATIONS_SERVICE_HOST}
       - http-load-generator-host:${HTTP_LOAD_GENERATOR_HOST}
+      - group0:${GROUP0_HOST}
       - group1:${GROUP1_HOST}
       - group2:${GROUP2_HOST}
       - group3:${GROUP3_HOST}

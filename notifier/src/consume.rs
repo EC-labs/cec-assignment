@@ -1,6 +1,7 @@
 use apache_avro::{from_value, Reader};
 use clap::ArgMatches;
 use event_hash::{HashData, NotificationType};
+use rand::Rng;
 use rdkafka::{
     client::ClientContext,
     config::ClientConfig,
@@ -9,9 +10,8 @@ use rdkafka::{
     message::{Headers, Message},
 };
 use reqwest::Client;
-use rand::Rng;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 use tokio::time::{self, Duration};
 
 #[derive(Deserialize, Debug)]
@@ -40,6 +40,7 @@ pub struct ConsumeConfiguration {
     brokers: String,
     topic: String,
     notifications_host: String,
+    token: Arc<str>,
 }
 
 impl From<&mut ArgMatches> for ConsumeConfiguration {
@@ -48,7 +49,12 @@ impl From<&mut ArgMatches> for ConsumeConfiguration {
         let brokers = args.remove_one::<String>("broker-list").expect("Required");
         let group_id = args.remove_one::<String>("group-id").expect("Required");
         let topic = args.remove_one::<String>("topic").expect("Required");
-        let notifications_host = args.remove_one::<String>("notifications-host").expect("Required");
+        let notifications_host = args
+            .remove_one::<String>("notifications-host")
+            .expect("Required");
+        let token = args
+            .remove_one::<String>("token")
+            .expect("Missing required arg");
 
         ConsumeConfiguration {
             secret_key,
@@ -56,6 +62,7 @@ impl From<&mut ArgMatches> for ConsumeConfiguration {
             brokers,
             topic,
             notifications_host,
+            token: token.into(),
         }
     }
 }
@@ -77,10 +84,7 @@ impl Consume {
             .set("enable.auto.commit", "true")
             .set("security.protocol", "SSL")
             .set("ssl.ca.location", "auth/ca.crt")
-            .set(
-                "ssl.keystore.location",
-                "auth/kafka.keystore.pkcs12",
-            )
+            .set("ssl.keystore.location", "auth/kafka.keystore.pkcs12")
             .set("ssl.keystore.password", "cc2023")
             .create_with_context(context)
             .expect("Consumer creation failed");
@@ -137,6 +141,8 @@ impl Consume {
                         map.insert("measurement_id", hash_data.measurement_id);
                         map.insert("experiment_id", hash_data.experiment_id);
                         map.insert("cipher_data", sensor_measurement.measurement_hash);
+
+                        let token = self.config.token.clone();
                         match hash_data.notification_type {
                             Some(NotificationType::OutOfRange) => {
                                 let client = self.client.clone();
@@ -146,11 +152,14 @@ impl Consume {
                                         let mut rng = rand::thread_rng();
                                         rng.gen_range(0..5)
                                     };
-                                    time::sleep(Duration::from_millis(sleep_secs*1000)).await;
+                                    time::sleep(Duration::from_millis(sleep_secs * 1000)).await;
                                     map.insert("notification_type", "OutOfRange".into());
                                     client
-                                        .post(format!("http://{}:3000/api/notify", notifications_host))
-                                        .query(&[("token", "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJleHAiOjE3MDQxMjk4MTgsInN1YiI6ImxhbmRhdSJ9.Gvdz0IuwRPd0BloUGS9vWbRY97ZAB-HC43Fora-CFV-sejq8aNr-WNDd0mOuUP1XvgDO7gaiGv9UkOtlRBEL_TlWizDmS2buTrKWCu2C6x8U1_NR5dfjF0sKdADA4DSLxxTwiuImXNHbtkhbZjbzpMn5CYlkuydbn2Rlg4lNAV91k2zWaM4op1IQO2g8iWmK_vgOX-iKOckNfKPafRF1mHHAg553ZHX8dTc_Dnfu31rDguXZt9mtN5Y9QZsBKd99u0A5vaDsaJjLGcfgSoQB1pwI3T8CVj4V5ppiTJLo8fU-2b7Q6kQ-vARV6lWZbmPhTAXwU7ZKDloRCHUopv1U2A")])
+                                        .post(format!(
+                                            "http://{}:3000/api/notify",
+                                            notifications_host
+                                        ))
+                                        .query(&[("token", token)])
                                         .json(&map)
                                         .send()
                                         .await
@@ -166,11 +175,14 @@ impl Consume {
                                         let mut rng = rand::thread_rng();
                                         rng.gen_range(0..5)
                                     };
-                                    time::sleep(Duration::from_millis(sleep_secs*1000)).await;
+                                    time::sleep(Duration::from_millis(sleep_secs * 1000)).await;
                                     map.insert("notification_type", "Stabilized".into());
                                     client
-                                        .post(format!("http://{}:3000/api/notify", notifications_host))
-                                        .query(&[("token", "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJleHAiOjE3MDQxMjk4MTgsInN1YiI6ImxhbmRhdSJ9.Gvdz0IuwRPd0BloUGS9vWbRY97ZAB-HC43Fora-CFV-sejq8aNr-WNDd0mOuUP1XvgDO7gaiGv9UkOtlRBEL_TlWizDmS2buTrKWCu2C6x8U1_NR5dfjF0sKdADA4DSLxxTwiuImXNHbtkhbZjbzpMn5CYlkuydbn2Rlg4lNAV91k2zWaM4op1IQO2g8iWmK_vgOX-iKOckNfKPafRF1mHHAg553ZHX8dTc_Dnfu31rDguXZt9mtN5Y9QZsBKd99u0A5vaDsaJjLGcfgSoQB1pwI3T8CVj4V5ppiTJLo8fU-2b7Q6kQ-vARV6lWZbmPhTAXwU7ZKDloRCHUopv1U2A")])
+                                        .post(format!(
+                                            "http://{}:3000/api/notify",
+                                            notifications_host
+                                        ))
+                                        .query(&[("token", token)])
                                         .json(&map)
                                         .send()
                                         .await
@@ -180,8 +192,6 @@ impl Consume {
                             }
                             _ => {}
                         }
-
-                        tokio::spawn(async move {});
                     }
                     self.consumer.commit_message(&b, CommitMode::Async).unwrap();
                 }
