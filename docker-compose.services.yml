@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   experiment-producer:
-    image: dclandau/demo-experiment-producer
+    image: dclandau/cec-experiment-producer
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"
@@ -30,7 +30,7 @@ services:
       - ./experiment-producer/config.json:/app/config.json
 
   notifications-service:
-    image: dclandau/demo-notifications-service
+    image: dclandau/cec-notifications-service
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"
@@ -51,7 +51,7 @@ services:
       - ./notifications-service/.env:/app/notifications-service/.env
 
   http-load-generator:
-    image: dclandau/demo-http-load-generator
+    image: dclandau/cec-http-load-generator
     ports:
       - "3002:3002"
     command: 
