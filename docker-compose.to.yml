@@ -11,8 +11,6 @@ services:
       - "${TOPIC_DOCUMENT}"
       - "--group-id"
       - "${TOAPI_CONSUMER_GROUP}"
-      - "--token"
-      - "${NOTIFIER_TOKEN}"
     ports:
       - '3003:3003'
     extra_hosts: 
@@ -40,6 +38,8 @@ services:
       - "${NOTIFIER_CONSUMER_GROUP}"
       - "--notifications-host"
       - "${NOTIFIER_NOTIFICATIONS_HOST}"
+      - "--token"
+      - "${NOTIFIER_TOKEN}"
     extra_hosts: 
       - host.docker.internal:host-gateway
     environment: 
