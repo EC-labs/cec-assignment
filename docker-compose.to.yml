@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   toapi:
-    image: dclandau/demo-test-to-api
+    image: dclandau/cec-test-to-api
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"
@@ -28,7 +28,7 @@ services:
       - ./auth:/app/auth
 
   notifier:
-    image: dclandau/demo-notifier
+    image: dclandau/cec-notifier
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"

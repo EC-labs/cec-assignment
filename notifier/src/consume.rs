@@ -102,6 +102,7 @@ impl Consume {
         self.consumer
             .subscribe(&[self.config.topic.as_str()])
             .expect("Can't subscribe to specified topics");
+        println!("Subscribed to {}", self.config.topic.as_str());
         self.read_loop().await;
     }
 

@@ -47,5 +47,6 @@ async fn main() {
 
     let consume_config = ConsumeConfiguration::from(&mut matches);
     let consume = Consume::new(consume_config);
+    println!("Consumer created");
     consume.start().await;
 }
