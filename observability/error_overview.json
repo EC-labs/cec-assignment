@@ -2,7 +2,7 @@
   "__inputs": [
     {
       "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
+      "label": "prometheus",
       "description": "",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -10,10 +10,10 @@
     },
     {
       "name": "DS_POSTGRESQL",
-      "label": "PostgreSQL",
+      "label": "postgresql",
       "description": "",
       "type": "datasource",
-      "pluginId": "postgres",
+      "pluginId": "grafana-postgresql-datasource",
       "pluginName": "PostgreSQL"
     }
   ],
@@ -23,11 +23,11 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "10.2.0"
+      "version": "11.2.0"
     },
     {
       "type": "datasource",
-      "id": "postgres",
+      "id": "grafana-postgresql-datasource",
       "name": "PostgreSQL",
       "version": "1.0.0"
     },
@@ -119,6 +119,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -126,9 +127,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -148,7 +151,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -202,17 +205,17 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id \n\t\tFROM \n\t\t\tunnest(array[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()  \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t)\nSELECT \n\tgroup_id\nFROM \n\tmissing_groups\nORDER BY \n\tCASE\n\t\tWHEN regexp_replace(group_id, '[a-z]', '', 'g') != '' THEN\n\t\t\tCAST(regexp_replace(group_id, '[a-z]', '', 'g') AS INTEGER)\n\t\tELSE\n\t\t\t0\n\tEND",
+          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id \n\t\tFROM \n\t\t\tunnest(array[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()  \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t)\nSELECT \n\tgroup_id\nFROM \n\tmissing_groups\nORDER BY \n\tCASE\n\t\tWHEN regexp_replace(group_id, '[a-z]', '', 'g') != '' THEN\n\t\t\tCAST(regexp_replace(group_id, '[a-z]', '', 'g') AS INTEGER)\n\t\tELSE\n\t\t\t0\n\tEND",
           "refId": "A",
           "sql": {
             "columns": [
@@ -238,7 +241,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -292,11 +295,11 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
@@ -372,6 +375,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -379,9 +383,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -445,6 +451,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -452,9 +459,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -474,7 +483,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
@@ -487,6 +496,6 @@
   "timezone": "",
   "title": "Error Overview",
   "uid": "b70e0b86-ee08-43bd-a96b-46bd53b52231",
-  "version": 14,
+  "version": 2,
   "weekStart": ""
 }

@@ -2,7 +2,7 @@
   "__inputs": [
     {
       "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
+      "label": "prometheus",
       "description": "",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -10,10 +10,10 @@
     },
     {
       "name": "DS_POSTGRESQL",
-      "label": "PostgreSQL",
+      "label": "postgresql",
       "description": "",
       "type": "datasource",
-      "pluginId": "postgres",
+      "pluginId": "grafana-postgresql-datasource",
       "pluginName": "PostgreSQL"
     }
   ],
@@ -35,11 +35,11 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "10.2.0"
+      "version": "11.2.0"
     },
     {
       "type": "datasource",
-      "id": "postgres",
+      "id": "grafana-postgresql-datasource",
       "name": "PostgreSQL",
       "version": "1.0.0"
     },
@@ -116,6 +116,7 @@
             "axisPlacement": "auto",
             "axisSoftMin": 0,
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -213,6 +214,7 @@
             "axisPlacement": "auto",
             "axisSoftMin": 0,
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -369,7 +371,7 @@
       "links": [
         {
           "title": "Drill down groups with errors",
-          "url": "https://grafana.cc2023.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
+          "url": "https://grafana.cec.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
         }
       ],
       "options": {
@@ -377,6 +379,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -384,9 +387,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -406,7 +411,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -443,6 +448,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -450,19 +456,21 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id\n\t\tFROM \n\t\t\tunnest(array[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()    \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t),\n\tcompleted_groups AS (\n\t\tSELECT \n\t\t\t*\n\t\tFROM \n\t\t\tall_groups\n\t\tEXCEPT ALL\n\t\tSELECT \n\t\t\t*\n\t\tFROM \n\t\t\tmissing_groups\n\t)\nSELECT COUNT(*) FROM completed_groups\n\t",
+          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id\n\t\tFROM \n\t\t\tunnest(array[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()    \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t),\n\tcompleted_groups AS (\n\t\tSELECT \n\t\t\t*\n\t\tFROM \n\t\t\tall_groups\n\t\tEXCEPT ALL\n\t\tSELECT \n\t\t\t*\n\t\tFROM \n\t\t\tmissing_groups\n\t)\nSELECT COUNT(*) FROM completed_groups\n\t",
           "refId": "A",
           "sql": {
             "columns": [
@@ -488,7 +496,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -523,7 +531,7 @@
       "links": [
         {
           "title": "Drill down groups with errors",
-          "url": "https://grafana.cc2023.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
+          "url": "https://grafana.cec.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
         }
       ],
       "options": {
@@ -531,6 +539,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -538,19 +547,21 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id\n\t\tFROM \n\t\t\tunnest(array[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()  \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t)\nSELECT \n\tCOUNT(*)\nFROM \n\tmissing_groups",
+          "rawSql": "WITH \n\tall_groups AS (\n\t\tSELECT \n\t\t\t'group'|| unnest as group_id\n\t\tFROM \n\t\t\tunnest(array[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])\n\t\tUNION ALL\n\t\tSELECT 'landau'\n\t),\n\tmissing_groups AS (\n\t\tSELECT \n\t\t\tag.group_id\n\t\tFROM\n\t\t\tdemo.notification_ground_truth gt\n\t\tCROSS JOIN \n\t\t\tall_groups ag\n\t\tLEFT JOIN\n\t\t\tdemo.notification n\n\t\t\tON gt.measurement_id = n.measurement_id AND gt.experiment_id = n.experiment_id\n\t\t\t\tAND n.group_id = ag.group_id\n\t\tWHERE \n\t\t\tgt.insert_timestamp BETWEEN $__timeFrom() AND $__timeTo()  \n\t\t\tAND n.group_id IS NULL\n\t\tGROUP BY \n\t\t\tag.group_id\n\t)\nSELECT \n\tCOUNT(*)\nFROM \n\tmissing_groups",
           "refId": "A",
           "sql": {
             "columns": [
@@ -576,7 +587,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -661,7 +672,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
@@ -693,7 +704,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -734,6 +745,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -741,13 +753,15 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
@@ -779,7 +793,7 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "${DS_POSTGRESQL}"
       },
       "fieldConfig": {
@@ -818,7 +832,7 @@
       "links": [
         {
           "title": "Drill down groups with errors",
-          "url": "https://grafana.cc2023.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
+          "url": "https://grafana.cec.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
         }
       ],
       "options": {
@@ -826,6 +840,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -833,13 +848,15 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "${DS_POSTGRESQL}"
           },
           "editorMode": "code",
@@ -920,6 +937,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -927,9 +945,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -985,6 +1005,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -992,9 +1013,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -1048,6 +1071,7 @@
       "id": 9,
       "options": {
         "displayMode": "gradient",
+        "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
         "namePlacement": "auto",
@@ -1060,9 +1084,10 @@
           "values": false
         },
         "showUnfilled": true,
+        "sizing": "auto",
         "valueMode": "text"
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -1118,7 +1143,7 @@
       "links": [
         {
           "title": "Drill down groups with errors",
-          "url": "https://grafana.cc2023.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
+          "url": "https://grafana.cec.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
         }
       ],
       "options": {
@@ -1126,6 +1151,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1133,9 +1159,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -1190,7 +1218,7 @@
       "links": [
         {
           "title": "Drill down groups with errors",
-          "url": "https://grafana.cc2023.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
+          "url": "https://grafana.cec.4400app.me/d/b70e0b86-ee08-43bd-a96b-46bd53b52231/error-overview?orgId=1&from=${__from}&to=${__to}"
         }
       ],
       "options": {
@@ -1198,6 +1226,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1205,9 +1234,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
-      "pluginVersion": "10.2.0",
+      "pluginVersion": "11.2.0",
       "targets": [
         {
           "datasource": {
@@ -1255,6 +1286,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "scheme",
@@ -1350,6 +1382,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "scheme",
@@ -1430,7 +1463,7 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
@@ -1443,6 +1476,6 @@
   "timezone": "",
   "title": "Overview",
   "uid": "d95f7ade-04ba-4ec7-9c8e-9eab85d5af98",
-  "version": 14,
+  "version": 5,
   "weekStart": ""
 }
