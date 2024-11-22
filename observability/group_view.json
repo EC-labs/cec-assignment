@@ -875,8 +875,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               },
               {
                 "color": "green",
@@ -943,8 +942,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               },
               {
                 "color": "green",
@@ -1013,8 +1011,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1085,8 +1082,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1155,8 +1151,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1272,8 +1267,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1369,8 +1363,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1426,9 +1419,9 @@
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "landau",
-          "value": "landau"
+          "selected": false,
+          "text": "group1",
+          "value": "group1"
         },
         "hide": 0,
         "includeAll": false,
@@ -1441,7 +1434,7 @@
             "value": "group0"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "group1",
             "value": "group1"
           },
@@ -1506,7 +1499,7 @@
             "value": "group13"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "landau",
             "value": "landau"
           }

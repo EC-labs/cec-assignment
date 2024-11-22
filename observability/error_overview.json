@@ -83,12 +83,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "links": [
-            {
-              "title": "Navigate to group dashboard",
-              "url": "https://grafana.cc2023.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__field.labels.host_name}&from=${__from}&to=${__to}"
-            }
-          ],
+          "links": [],
           "mappings": [],
           "noValue": "0",
           "thresholds": {
@@ -166,7 +161,7 @@
           "links": [
             {
               "title": "Navigate to group dashboard",
-              "url": "https://grafana.cc2023.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__data.fields.group_id}&from=${__from}&to=${__to}"
+              "url": "https://grafana.cec.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__data.fields.group_id}&from=${__from}&to=${__to}"
             }
           ],
           "mappings": [],
@@ -256,7 +251,7 @@
           "links": [
             {
               "title": "Navigate to group dashboard",
-              "url": "https://grafana.cc2023.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__data.fields.group_id}&from=${__from}&to=${__to}"
+              "url": "https://grafana.cec.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__data.fields.group_id}&from=${__from}&to=${__to}"
             }
           ],
           "mappings": [],
@@ -342,7 +337,7 @@
           "links": [
             {
               "title": "Navigate to group dashboard",
-              "url": "https://grafana.cc2023.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__field.labels.host_name}&from=${__from}&to=${__to}"
+              "url": "https://grafana.cec.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__field.labels.host_name}&from=${__from}&to=${__to}"
             }
           ],
           "mappings": [],
@@ -418,7 +413,7 @@
           "links": [
             {
               "title": "Navigate to group dashboard",
-              "url": "https://grafana.cc2023.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__field.labels.host_name}&from=${__from}&to=${__to}"
+              "url": "https://grafana.cec.4400app.me/d/d496b29e-14e1-4ec7-b6ae-9b078ba8c81e/group-view?orgId=1&var-group=${__field.labels.host_name}&from=${__from}&to=${__to}"
             }
           ],
           "mappings": [],
@@ -482,7 +477,6 @@
       "type": "stat"
     }
   ],
-  "refresh": "",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
@@ -496,6 +490,6 @@
   "timezone": "",
   "title": "Error Overview",
   "uid": "b70e0b86-ee08-43bd-a96b-46bd53b52231",
-  "version": 2,
+  "version": 9,
   "weekStart": ""
 }

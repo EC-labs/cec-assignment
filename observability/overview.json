@@ -255,32 +255,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "landau"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -1476,6 +1451,6 @@
   "timezone": "",
   "title": "Overview",
   "uid": "d95f7ade-04ba-4ec7-9c8e-9eab85d5af98",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }
