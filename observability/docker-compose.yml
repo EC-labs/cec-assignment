@@ -7,6 +7,12 @@ services:
       - prometheus-data:/prometheus
     ports: 
       - 3005:9090
+    command: 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--storage.tsdb.retention.time=2y"
     extra_hosts: 
       - host.docker.internal:host-gateway
       - experiment-producer-host:${EXPERIMENT_PRODUCER_HOST}

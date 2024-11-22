@@ -33,6 +33,7 @@ scrape_configs:
 
     static_configs:
     - targets: 
+      - 'group0:3008'
       - 'group1:3008'
       - 'group2:3008'
       - 'group3:3008'
