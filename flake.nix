@@ -35,7 +35,7 @@
                         '';
                     in
                     pkgs.dockerTools.buildImage {
-                        name = "experiment-producer";
+                        name = "dclandau/cec-experiment-producer";
                         tag = "latest";
                         copyToRoot = [ 
                             self.packages.${system}.producer 
@@ -53,7 +53,7 @@
                         '';
                     in
                     pkgs.dockerTools.buildImage {
-                        name = "notifications-service";
+                        name = "dclandau/cec-notifications-service";
                         tag = "latest";
                         copyToRoot = [ 
                             self.packages.${system}.notifications-service
