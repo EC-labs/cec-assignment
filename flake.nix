@@ -22,6 +22,7 @@
             packages.${system} = {
                 default = self.packages.${system}.producer;
                 producer = crate.workspaceMembers.experiment-producer.build;
+                notifications-service = crate.workspaceMembers.notifications-service.build;
             };
 
             images.${system} = {
@@ -42,6 +43,24 @@
                         ];
                         config = {
                             Entrypoint = [ "/bin/experiment-producer" ];
+                        };
+                    };
+                notifications-service = 
+                    let 
+                        env = pkgs.runCommand "schemas" {} ''
+                            mkdir -p $out/notifications-service
+                            cp ${./notifications-service/.env} $out/notifications-service/.env
+                        '';
+                    in
+                    pkgs.dockerTools.buildImage {
+                        name = "notifications-service";
+                        tag = "latest";
+                        copyToRoot = [ 
+                            self.packages.${system}.notifications-service
+                            env
+                        ];
+                        config = {
+                            Entrypoint = [ "/bin/notifications-service" ];
                         };
                     };
             };

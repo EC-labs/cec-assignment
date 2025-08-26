@@ -15,6 +15,9 @@ let
         experiment-producer = attrs: {
             SQLX_OFFLINE="true";
         };
+        notifications-service = attrs: {
+            SQLX_OFFLINE="true";
+        };
     };
     customBuildRustCrateForPkgs = pkgs: pkgs.buildRustCrate.override {
         defaultCrateOverrides = pkgs.defaultCrateOverrides // crateOverrides;
