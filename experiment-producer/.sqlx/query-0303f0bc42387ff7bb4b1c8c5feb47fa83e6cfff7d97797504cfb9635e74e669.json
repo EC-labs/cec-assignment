@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO \n                demo.notification_ground_truth (experiment_id, measurement_id) \n            VALUES \n                ($1, $2)\n            ON CONFLICT\n                DO NOTHING;\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0303f0bc42387ff7bb4b1c8c5feb47fa83e6cfff7d97797504cfb9635e74e669"
+}

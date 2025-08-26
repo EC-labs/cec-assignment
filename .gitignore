@@ -4,3 +4,5 @@ ca.key
 *.log*
 auth/
 config/
+.direnv/
+result
