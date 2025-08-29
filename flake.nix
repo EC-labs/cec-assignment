@@ -60,7 +60,16 @@
         in
         {
             devShells.${system} = {
-                default = pkgs.callPackage (import ./shell.nix) {};
+                default = pkgs.mkShell {
+                    packages = with pkgs; [
+                        cargo
+                        rustc
+                        rust-analyzer
+                        pkg-config
+                        openssl
+                        cmake
+                    ];
+                };
                 production-rate = pkgs.mkShell {
                     packages = [
                         python
@@ -139,6 +148,30 @@
                         config = {
                             Entrypoint = [ "/bin/production-rate" ];
                         };
+                    };
+            };
+
+            apps.${system} = {
+                pushImages = 
+                    let
+                        loadPush = imageDerivation: ''
+                            image=$(docker load < ${imageDerivation} | sed -nE 's/Loaded image: (\w+)/\1/p')
+                            docker push $image
+                        '';
+                        joined = 
+                            builtins.concatStringsSep "\n" (
+                                builtins.map loadPush (builtins.attrValues self.images.${system})
+                            );
+                        scriptContents = 
+                            ''
+                            set -e
+                            '' 
+                            + joined;
+                        script = pkgs.writeShellScript "push-images" scriptContents;
+                    in
+                    {
+                        type = "app";
+                        program = "${script}"; 
                     };
             };
         };
