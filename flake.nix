@@ -86,7 +86,7 @@
                 notifications-service = crate.workspaceMembers.notifications-service.build;
                 production-rate = pkgs.writeShellScriptBin "production-rate" ''
                     source ${venv}/bin/activate
-                    ${venv}/bin/production-rate
+                    ${venv}/bin/production-rate "$@"
                 '';
             };
 

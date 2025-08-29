@@ -38,13 +38,11 @@ def main(producer_connection: str):
     st.write(f"Scraping `{METRIC_NAME}` from `{uri}` every {SCRAPE_INTERVAL}s")
     placeholder = st.empty()
 
-    print(sys.argv)
-
     while True:
         scrape(uri)
         timestamps, values = st.session_state["timestamps"], st.session_state["values"]
         timediff = (pd.Series(timestamps).astype(np.int64) - pd.Series(timestamps).shift().astype(np.int64)) / 1e9
-        eventdiff = pd.Series(st.session_state["values"]) - pd.Series(st.session_state["values"]).shift()
+        eventdiff = pd.Series(values) - pd.Series(values).shift()
 
         with placeholder.container():
             df = pd.DataFrame({
