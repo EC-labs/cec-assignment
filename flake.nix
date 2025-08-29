@@ -133,6 +133,7 @@
                         name = "dclandau/cec-production-rate";
                         tag = "latest";
                         copyToRoot = [ 
+                            pkgs.coreutils
                             self.packages.${system}.production-rate
                         ];
                         config = {

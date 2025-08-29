@@ -34,7 +34,7 @@ def main(producer_connection: str):
     st.session_state["timestamps"] = deque(maxlen=MAX_POINTS)
     st.session_state["values"] = deque(maxlen=MAX_POINTS)
 
-    st.title("Producer Metrics (events/s)")
+    st.title("Producer Metrics")
     st.write(f"Scraping `{METRIC_NAME}` from `{uri}` every {SCRAPE_INTERVAL}s")
     placeholder = st.empty()
 
