@@ -60,7 +60,7 @@ impl TempRange {
 
 #[derive(Clone, Copy, Debug)]
 pub struct TemperatureSample {
-    cur: f32,
+    pub cur: f32,
     temp_range: TempRange,
 }
 
@@ -258,6 +258,7 @@ impl Experiment {
         );
 
         for (sensor_events, _span, measurement) in stabilization_events {
+            let enter = _span.enter();
             measurement
                 .persist_sensor_events(
                     &self.producer,
@@ -268,6 +269,7 @@ impl Experiment {
                     self.config.sample_rate,
                 )
                 .await;
+            drop(enter);
         }
     }
 
@@ -462,7 +464,6 @@ impl<'a> Iterator for IterMut<'a> {
         } else {
             *self.sample
         };
-        debug!(avg_temperature = ret.cur);
         Some(ret)
     }
 }

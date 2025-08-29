@@ -8,7 +8,7 @@ use rdkafka::{
 };
 use std::collections::HashMap;
 use std::{fs, time::Duration};
-use tracing::{debug, info, span, Level, Span};
+use tracing::{trace, debug, info, span, Level, Span};
 use uuid::Uuid;
 
 use event_hash::{HashData, NotificationType};
@@ -296,6 +296,7 @@ pub fn temperature_events<'b>(
         let measurement_id = format!("{}", Uuid::new_v4());
         let span = span!(tracing::Level::INFO, "measurement", measurement_id);
         let _enter = span.enter();
+        debug!(avg_temperature = sample.cur);
         let current_time = time::current_epoch();
 
         let notification_type = compute_notification_type(sample, prev_sample, stage);
@@ -405,7 +406,7 @@ impl KafkaTopicProducer {
             .payload(&record.payload)
             .headers(record.headers);
 
-        debug!(
+        trace!(
             topic,
             key = format!("{:?}", record.key),
             record = format!(
