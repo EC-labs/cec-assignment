@@ -5,11 +5,12 @@ use sqlx::{
     postgres::{PgPoolOptions, Postgres},
     Pool,
 };
-use std::env;
+use std::{env, fs::{self, create_dir_all}, path::Path};
 use tokio::time::{self as tktime, Duration};
 use tracing::{info, span, Instrument, Level};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{filter::LevelFilter, fmt::time::OffsetTime, prelude::*, EnvFilter};
+use anyhow::{Context, Result};
 
 mod config;
 mod database;
@@ -132,7 +133,7 @@ async fn run_multiple_experiments(
     future::join_all(handles).await;
 }
 
-fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
+fn configure_tracing(file_subscriber: bool) -> Result<Option<WorkerGuard>> {
     let mut layers = vec![];
 
     let offset = UtcOffset::from_hms(2, 0, 0).expect("Should get CET offset");
@@ -143,7 +144,13 @@ fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
     let timer = OffsetTime::new(offset, time_format);
 
     let _guard = if file_subscriber {
-        let file_appender = tracing_appender::rolling::daily("./", "producer.json.log");
+        let log_directory = Path::new("./logs");
+        if !log_directory.is_dir() {
+            create_dir_all(log_directory)
+                .context(format!("Failed to create directory `{}`", log_directory.display()))?;
+        }
+
+        let file_appender = tracing_appender::rolling::daily(log_directory, "producer.json.log");
         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
         layers.push(
@@ -177,7 +184,7 @@ fn configure_tracing(file_subscriber: bool) -> Option<WorkerGuard> {
     );
 
     tracing_subscriber::registry().with(layers).init();
-    _guard
+    Ok(_guard)
 }
 
 fn configure_cli() -> ArgMatches {
@@ -218,7 +225,7 @@ fn configure_cli() -> ArgMatches {
         .arg(Arg::new("sample-rate")
             .required(false)
             .long("sample-rate")
-            .default_value("100")
+            .default_value("1000")
             .action(ArgAction::Set)
             .value_parser(value_parser!(u64))
         )
@@ -283,10 +290,10 @@ fn configure_cli() -> ArgMatches {
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
-async fn main() {
+async fn main() -> Result<()> {
     dotenv::from_filename("experiment-producer/.env").expect(".env file should exist");
     let mut matches = configure_cli();
-    let _guard = configure_tracing(matches.remove_one::<bool>("file-subscriber").unwrap());
+    let _guard = configure_tracing(matches.remove_one::<bool>("file-subscriber").unwrap())?;
 
     let pool = match env::var("DATABASE_URL") {
         Ok(database_url) => {
@@ -312,4 +319,5 @@ async fn main() {
     } else {
         run_single_experiment(matches, pool, metrics).await
     }
+    Ok(())
 }

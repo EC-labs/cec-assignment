@@ -60,7 +60,7 @@ impl ConfigEntry {
     }
 
     fn default_sample_rate() -> u64 {
-        100
+        1000
     }
 
     fn default_temp_range() -> TempRange {
