@@ -16,14 +16,18 @@ def scrape(uri: str):
     try:
         resp = requests.get(uri, timeout=5)
         resp.raise_for_status()
+        ts = time.time()
+        val = 0
         for family in text_string_to_metric_families(resp.text):
             if family.name == METRIC_NAME:
                 for sample in family.samples:
-                    ts = time.time()
-                    val = sample.value
-                    st.session_state["timestamps"].append(pd.to_datetime(ts, unit="s"))
-                    st.session_state["values"].append(val)
+                    val += sample.value
                     break
+        if "start" not in st.session_state:
+            st.session_state["start"] = ts
+        relative_ts = ts - st.session_state["start"]
+        st.session_state["timestamps"].append(relative_ts)
+        st.session_state["values"].append(val)
     except Exception as e:
         print(f"Error scraping metrics: {e}")
 
@@ -41,7 +45,7 @@ def main(producer_connection: str):
     while True:
         scrape(uri)
         timestamps, values = st.session_state["timestamps"], st.session_state["values"]
-        timediff = (pd.Series(timestamps).astype(np.int64) - pd.Series(timestamps).shift().astype(np.int64)) / 1e9
+        timediff = (pd.Series(timestamps) - pd.Series(timestamps).shift())
         eventdiff = pd.Series(values) - pd.Series(values).shift()
 
         with placeholder.container():
