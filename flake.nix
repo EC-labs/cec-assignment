@@ -43,12 +43,10 @@
             crate = pkgs.callPackage (import ./default.nix) { inherit crate2nixTools; };
 
             workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./production-rate; };
-            overlay = workspace.mkPyprojectOverlay {
-                sourcePreference = "wheel"; # or sourcePreference = "sdist";
-            };
+            overlay = workspace.mkPyprojectOverlay { sourcePreference = "wheel"; };
 
+            # production-rate
             python = pkgs.python312;
-
             pythonSet = (pkgs.callPackage pyproject-nix.build.packages { inherit python; }).overrideScope
                 (
                     lib.composeManyExtensions [
@@ -57,6 +55,9 @@
                     ]
                 );
             venv = pythonSet.mkVirtualEnv "production-rate-env" workspace.deps.default;
+
+            # production-validation
+            runtimeDeps = [ pkgs.jq pkgs.coreutils pkgs.bash ];
         in
         {
             devShells.${system} = {
@@ -87,6 +88,7 @@
                         unset PYTHONPATH
                     '';
                 };
+                production-validation = pkgs.mkShell { packages = runtimeDeps; };
             };
 
             packages.${system} = {
@@ -97,6 +99,22 @@
                     source ${venv}/bin/activate
                     ${venv}/bin/production-rate "$@"
                 '';
+                production-validation = pkgs.stdenv.mkDerivation rec {
+                        name = "production-validation";
+                        src = ./experiment-producer/log-queries;
+                        buildInputs = [ pkgs.makeWrapper src ] ++ runtimeDeps;
+                        installPhase = ''
+                            mkdir -p $out/bin
+
+                            ln -s $src/get-experiments.sh $out/bin
+                            ln -s $src/get-experiment-temperature.sh $out/bin
+                            ln -s $src/producer-events.sh $out/bin
+
+                            wrapProgram $out/bin/get-experiments.sh --set PATH ${lib.makeBinPath runtimeDeps}
+                            wrapProgram $out/bin/get-experiment-temperature.sh --set PATH ${lib.makeBinPath runtimeDeps}
+                            wrapProgram $out/bin/producer-events.sh --set PATH ${lib.makeBinPath runtimeDeps}
+                        '';
+                    };
             };
 
             images.${system} = {
@@ -147,6 +165,17 @@
                         ];
                         config = {
                             Entrypoint = [ "/bin/production-rate" ];
+                        };
+                    };
+                production-validation = 
+                    pkgs.dockerTools.buildImage {
+                        name = "dclandau/cec-production-validation";
+                        tag = "latest";
+                        copyToRoot = [ 
+                            self.packages.${system}.production-validation
+                        ];
+                        config = {
+                            Entrypoint = [ "/bin/producer-events.sh" ];
                         };
                     };
             };

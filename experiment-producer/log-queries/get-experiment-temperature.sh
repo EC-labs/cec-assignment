@@ -1,6 +1,3 @@
-#!/bin/bash
-
-
 USAGE='
 Usage: get-experiment-temperature.sh <log-file> <experiment-id>
 
@@ -14,10 +11,37 @@ if (( "$#" != 2 )); then
     exit 1
 fi
 
-jq \
+relevant_events=$(jq \
     --arg experiment "$2" \
-    'select(.span.experiment_id == $experiment)' "$1" \
-    | jq 'select(.fields.avg_temperature != null)' \
-    | jq '{"timestamp": .timestamp, "avg_temperature": .fields.avg_temperature}' \
-    | jq -s 
+    'select(any( .spans[]?; .experiment_id == $experiment ))' "$1" \
+    | jq 'select(.fields.avg_temperature or .fields.stage or .fields.range_event)'
+)
 
+
+cat <<< $relevant_events \
+    | jq '{
+        "timestamp": .timestamp, 
+        "event_type": (
+            if .fields.stage then 
+                "new_stage" 
+            elif .fields.avg_temperature then
+                "avg_temperature" 
+            elif .fields.range_event then
+                "range_event"
+            else
+                empty
+            end
+        ), 
+        "value": (
+            if .fields.stage then 
+                .fields.stage
+            elif .fields.avg_temperature then
+                { "measurement_id": .span.measurement_id, "average": .fields.avg_temperature }
+            elif .fields.range_event then
+                { "measurement_id": .span.measurement_id, "event": .fields.range_event }
+            else
+                empty
+            end
+        )
+    }' \
+    | jq -s
