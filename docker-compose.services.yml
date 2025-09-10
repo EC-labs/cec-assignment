@@ -25,9 +25,9 @@ services:
         max-size: "100m"
         max-file: 5
     volumes:
-      - ./experiment-producer/auth:/app/experiment-producer/auth
-      - ./experiment-producer/.env:/app/experiment-producer/.env
-      - ./experiment-producer/config.json:/app/config.json
+      - ./experiment-producer/auth:/experiment-producer/auth
+      - ./experiment-producer/.env:/experiment-producer/.env
+      - ./experiment-producer/config.json:/config.json
 
   notifications-service:
     image: dclandau/cec-notifications-service
@@ -48,7 +48,7 @@ services:
         max-size: "100m"
         max-file: 5
     volumes:
-      - ./notifications-service/.env:/app/notifications-service/.env
+      - ./notifications-service/.env:/notifications-service/.env
 
   http-load-generator:
     image: dclandau/cec-http-load-generator
