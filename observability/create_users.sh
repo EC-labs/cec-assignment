@@ -36,11 +36,11 @@ if ! [[ -d $groupsd ]]; then
     exit 1 
 fi
 
-for (( i=18; i<$groups; i++ )); do
-
+for (( i=1; i<$groups; i++ )); do
     username="group$i"
     password="$(tr -dc 'A-Za-z0-9!#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' </dev/urandom | head -c 13; echo)"
 
+    echo "=== create user $username with pw $password ==="
     groupd="${groupsd}/${username}"
     if ! [[ -d "$groupd" ]]; then
         echo "${groupd} is not a directory in ${groupsd}"
@@ -58,7 +58,7 @@ for (( i=18; i<$groups; i++ )); do
           "email": "'"group$i@uu.nl"'",
           "OrgId": 1
         }' \
-        https://landau:${PASSWORD}@grafana.cec.4400app.me/api/admin/users
+        https://landau:${PASSWORD}@grafana-cec.ad.dlandau.nl/api/admin/users
 
     grafana_credentials "$username" "$password" > "$groupd/grafana"
 done
