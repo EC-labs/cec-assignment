@@ -342,7 +342,7 @@ impl Requestor {
             })
             .boxed()
             .buffer_unordered(self.config.max_in_flight as usize)
-            .for_each(|response| async {
+            .for_each(async |response| {
                 match response {
                     (Err(response_type), rtt, endpoint) => {
                         self.update_counters(&Err(response_type), &rtt, &endpoint)
