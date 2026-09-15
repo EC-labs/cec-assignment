@@ -96,6 +96,7 @@
                 default = self.packages.${system}.experiment-producer;
                 experiment-producer = crate.workspaceMembers.experiment-producer.build;
                 notifications-service = crate.workspaceMembers.notifications-service.build;
+                http-load-generator = crate.workspaceMembers.http-load-generator.build;
                 production-rate = pkgs.writeShellScriptBin "production-rate" ''
                     source ${venv}/bin/activate
                     ${venv}/bin/production-rate "$@"
@@ -154,6 +155,17 @@
                         ];
                         config = {
                             Entrypoint = [ "/bin/notifications-service" ];
+                        };
+                    };
+                http-load-generator =
+                    pkgs.dockerTools.buildImage {
+                        name = "dclandau/cec-http-load-generator";
+                        inherit tag;
+                        copyToRoot = [
+                            self.packages.${system}.http-load-generator
+                        ];
+                        config = {
+                            Entrypoint = [ "/bin/http-load-generator" ];
                         };
                     };
                 production-rate = 

@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 rdkafka = { version = "0.25", features = ["cmake-build", "ssl"] }
 tokio = { version = "1", features = ["full"]}
-clap = { version = "4", features = ["derive", "cargo"]}
+clap = { version = "4", features = ["derive", "cargo", "env"] }
 apache-avro = "0.15"
 uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"]}
 serde = { version = "1.0.183", features = ["derive"]}

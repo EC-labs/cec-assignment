@@ -193,6 +193,7 @@ fn configure_cli() -> ArgMatches {
         .arg(Arg::new("secret-key")
             .required(false)
             .long("secret-key")
+            .env("SECRET_KEY")
             .action(ArgAction::Set)
             .default_value("QJUHsPhnA0eiqHuJqsPgzhDozYO4f1zh")
             .help("<key> is a 32 character string that must match the key being passed to the notifications-service")
@@ -289,7 +290,7 @@ fn configure_cli() -> ArgMatches {
         .get_matches()
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 16)]
+#[tokio::main]
 async fn main() -> Result<()> {
     dotenv::from_filename("experiment-producer/.env").expect(".env file should exist");
     let mut matches = configure_cli();
