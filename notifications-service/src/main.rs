@@ -9,7 +9,7 @@ use std::{
     env,
     sync::{Arc, Mutex},
 };
-use tracing::{info, Level};
+use tracing::{info, Level, warn};
 
 mod api;
 mod jwt;
@@ -20,11 +20,28 @@ use api::{Api, SecretKey};
 
 #[derive(Parser, Debug)]
 struct CliArgs {
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        required=true,
+        env="SECRET_KEY"
+    )]
     secret_key: String,
 
-    #[arg(short, long)]
-    external_ip: String,
+    #[arg(
+        short,
+        long,
+        required=false,
+    )]
+    external_ip: Option<String>,
+
+    #[arg(
+        long,
+        required=false,
+        default_value="http://localhost:3000/api",
+        env="SWAGGER_CONNECTION"
+    )]
+    swagger_connection: String,
 }
 
 #[tokio::main]
@@ -59,9 +76,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => None,
     };
 
-    let external_ip = args.external_ip;
+    if let Some(_) = args.external_ip {
+        warn!("option `external-ip` has been deprecated");
+    };
+
     let api_service = OpenApiService::new(Api, "Notifications Service", "1.1")
-        .server(format!("http://{}:3000/api", external_ip));
+        .server(args.swagger_connection);
 
     let ui = api_service.swagger_ui();
     let app = Route::new()

@@ -18,7 +18,7 @@ serde = "1.0.183"
 serde_json = "1.0.104"
 tracing-subscriber = "0.3.17"
 tracing = "0.1"
-clap = { version = "4", features = ["derive", "cargo"]}
+clap = { version = "4", features = ["derive", "cargo", "env"] }
 rand = "0.8.2"
 generic-array = "0.14.7"
 aes-gcm = "0.10.2"

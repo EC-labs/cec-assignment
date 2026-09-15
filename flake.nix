@@ -37,6 +37,7 @@
         let 
             system = "x86_64-linux";
             pkgs = nixpkgs.legacyPackages.${system};
+            tag = self.shortRev or self.dirtyShortRev;
             inherit (nixpkgs) lib;
 
             crate2nixTools = crate2nix.lib.tools;
@@ -128,7 +129,7 @@
                     in
                     pkgs.dockerTools.buildImage {
                         name = "dclandau/cec-experiment-producer";
-                        tag = "latest";
+                        inherit tag;
                         copyToRoot = [ 
                             self.packages.${system}.experiment-producer 
                             env
@@ -146,7 +147,7 @@
                     in
                     pkgs.dockerTools.buildImage {
                         name = "dclandau/cec-notifications-service";
-                        tag = "latest";
+                        inherit tag;
                         copyToRoot = [ 
                             self.packages.${system}.notifications-service
                             env
@@ -158,7 +159,7 @@
                 production-rate = 
                     pkgs.dockerTools.buildImage {
                         name = "dclandau/cec-production-rate";
-                        tag = "latest";
+                        inherit tag;
                         copyToRoot = [ 
                             pkgs.coreutils
                             self.packages.${system}.production-rate
@@ -170,7 +171,7 @@
                 production-validation = 
                     pkgs.dockerTools.buildImage {
                         name = "dclandau/cec-production-validation";
-                        tag = "latest";
+                        inherit tag;
                         copyToRoot = [ 
                             self.packages.${system}.production-validation
                         ];
