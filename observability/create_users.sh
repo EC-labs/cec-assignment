@@ -58,7 +58,7 @@ for (( i=1; i<$groups; i++ )); do
           "email": "'"group$i@uu.nl"'",
           "OrgId": 1
         }' \
-        https://landau:${PASSWORD}@grafana-cec.ad.dlandau.nl/api/admin/users
+        https://landau:${PASSWORD}@grafana.cec.dlandau.nl/api/admin/users
 
     grafana_credentials "$username" "$password" > "$groupd/grafana"
 done
