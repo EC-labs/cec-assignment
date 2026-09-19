@@ -175,6 +175,7 @@
                         inherit tag;
                         copyToRoot = [
                             self.packages.${system}.notifier
+                            pkgs.cacert
                         ];
                         config = {
                             Entrypoint = [ "/bin/notifier" ];
