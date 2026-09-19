@@ -26,7 +26,7 @@ services:
       - ./auth:/app/auth
 
   notifier:
-    image: dclandau/cec-notifier:15f316c
+    image: dclandau/cec-notifier:e2cd921
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"
