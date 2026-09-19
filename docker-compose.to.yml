@@ -26,7 +26,7 @@ services:
       - ./auth:/app/auth
 
   notifier:
-    image: dclandau/cec-notifier
+    image: dclandau/cec-notifier:5cd7c03
     command: 
       - "--secret-key" 
       - "${SECRET_KEY}"
@@ -50,4 +50,4 @@ services:
         max-size: "100m"
         max-file: 5
     volumes:
-      - ./auth:/app/auth
+      - ./auth:/auth
