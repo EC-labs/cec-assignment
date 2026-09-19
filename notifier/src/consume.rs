@@ -157,7 +157,7 @@ impl Consume {
                                     map.insert("notification_type", "OutOfRange".into());
                                     client
                                         .post(format!(
-                                            "http://{}:3000/api/notify",
+                                            "{}/api/notify",
                                             notifications_host
                                         ))
                                         .query(&[("token", token)])
