@@ -2,7 +2,7 @@ use clap::{command, value_parser, Arg, ArgAction};
 use std::process;
 use tokio::sync::mpsc;
 use env_logger::TimestampPrecision;
-use log::info;
+use log::{info, error};
 
 mod consume;
 mod experiment;
@@ -14,12 +14,26 @@ mod request;
 use crate::consume::{Consume, ConsumeConfiguration};
 use crate::receiver::{ExperimentReceiver, ExperimentReceiverConfig};
 
+fn raise_fd_limit(soft: u64) -> Option<()> {
+    if let Ok((_, hard)) = rlimit::Resource::NOFILE.get() {
+        if soft > hard {
+            error!("new soft limit is greater than hard limit: {} > {}", soft, hard);
+            return None;
+        }
+        let _ = rlimit::Resource::NOFILE.set(soft, hard);
+        info!("increase open files soft limit to 2048");
+    }
+    Some(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::builder()
         .format_timestamp(Some(TimestampPrecision::Millis))
         .init();
     info!("initialized logging");
+
+    raise_fd_limit(2048).expect("failed to increase open files rlimit");
     ctrlc::set_handler(move || {
         println!("received Ctrl+C!");
         process::exit(0);
