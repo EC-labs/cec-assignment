@@ -1,5 +1,4 @@
 use clap::{command, value_parser, Arg, ArgAction};
-use futures::future;
 use std::process;
 use tokio::sync::mpsc;
 

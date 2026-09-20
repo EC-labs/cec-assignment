@@ -11,6 +11,8 @@ use tokio::{
     sync::RwLock,
     time::{self, Duration},
 };
+use log::warn;
+
 
 use crate::metric::Metrics;
 use crate::{
@@ -110,7 +112,8 @@ impl Requestor {
     ) -> Result<(), ResponseError> {
         let response = match response {
             Ok(response) => response,
-            Err(_) => {
+            Err(e) => {
+                warn!("ServerError {}: {e:?}", self.host.host_name);
                 return Err(ResponseError::ServerError);
             }
         };
@@ -190,7 +193,10 @@ impl Requestor {
     ) -> Result<(), ResponseError> {
         let response = match response {
             Ok(response) => response,
-            Err(_) => return Err(ResponseError::ServerError),
+            Err(e) => {
+                warn!("ServerError {}: {e:?}", self.host.host_name);
+                return Err(ResponseError::ServerError);
+            },
         };
 
         let url = response.url().clone();
