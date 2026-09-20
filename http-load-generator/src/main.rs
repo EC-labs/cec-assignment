@@ -1,6 +1,8 @@
 use clap::{command, value_parser, Arg, ArgAction};
 use std::process;
 use tokio::sync::mpsc;
+use env_logger::TimestampPrecision;
+use log::info;
 
 mod consume;
 mod experiment;
@@ -14,6 +16,10 @@ use crate::receiver::{ExperimentReceiver, ExperimentReceiverConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::builder()
+        .format_timestamp(Some(TimestampPrecision::Millis))
+        .init();
+    info!("initialized logging");
     ctrlc::set_handler(move || {
         println!("received Ctrl+C!");
         process::exit(0);
@@ -129,6 +135,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let receiver_config = ExperimentReceiverConfig::from(&mut matches);
     let receiver = ExperimentReceiver::new(receiver_config, experiment_rx);
     let receiver_handle = tokio::spawn(receiver.start());
+
     tokio::spawn(async move {
         consume.start(experiment_tx).await;
     });

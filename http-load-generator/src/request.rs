@@ -365,7 +365,6 @@ impl Requestor {
         self.update_gauge_effective(
             ((batch.len() as f64) / (duration.as_millis() as f64 / 1000.0)).round() as i64,
         );
-        println!("Performed {} requests", batch.len());
     }
 
     pub async fn start(&mut self) {
