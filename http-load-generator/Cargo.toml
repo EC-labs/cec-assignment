@@ -22,3 +22,6 @@ ctrlc = "3.4.1"
 log = "0.4.34"
 env_logger = "0.11.11"
 rlimit = "0.11.0"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "time"] }
+time = "0.3.29"

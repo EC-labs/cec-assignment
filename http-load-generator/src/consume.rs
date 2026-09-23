@@ -11,6 +11,7 @@ use tokio::{
     sync::mpsc::Sender,
     time::{self, Duration},
 };
+use tracing::{info, error};
 
 use crate::experiment::{ExperimentDocument, ExperimentDocumentData};
 
@@ -20,7 +21,7 @@ impl ClientContext for CustomContext {}
 
 impl ConsumerContext for CustomContext {
     fn post_rebalance(&self, rebalance: &Rebalance) {
-        println!("Post rebalance {:?}", rebalance);
+        info!("Post rebalance {:?}", rebalance);
     }
 }
 
@@ -82,7 +83,9 @@ impl Consume {
     async fn read_loop(&self, tx: Sender<ExperimentDocument>) {
         loop {
             match self.consumer.recv().await {
-                Err(e) => println!("Kafka error: {}", e),
+                Err(e) => {
+                    error!("kafka error: {}", e);
+                },
                 Ok(b) => {
                     let m = b.detach();
                     let reader = Reader::new(m.payload().unwrap()).unwrap();
@@ -97,11 +100,13 @@ impl Consume {
                         let tx = tx.clone();
                         let wait_before_tx = self.config.wait_before_tx as u64;
                         tokio::spawn(async move {
+                            let experiment_id = experiment_document.experiment.clone();
+                            info!("received experiment {}; wait {} seconds", experiment_id, wait_before_tx);
                             time::sleep(Duration::from_millis(wait_before_tx * 1000)).await;
-                            println!("experiment: {}", experiment_document.experiment);
                             tx.send(experiment_document)
                                 .await
                                 .expect("Receiver available");
+                            info!("experiment {} available", experiment_id);
                         });
                     }
                     self.consumer.commit_message(&b, CommitMode::Async).unwrap();

@@ -1,4 +1,5 @@
 use async_broadcast::Receiver;
+use tracing::error;
 use clap::ArgMatches;
 use futures::{stream, StreamExt};
 use reqwest::{Client, Error, RequestBuilder, Response};
@@ -11,8 +12,6 @@ use tokio::{
     sync::RwLock,
     time::{self, Duration},
 };
-use log::warn;
-
 
 use crate::metric::Metrics;
 use crate::{
@@ -39,7 +38,7 @@ impl std::error::Error for ResponseError {}
 
 #[derive(Deserialize, Clone)]
 pub struct Host {
-    host_name: String,
+    pub host_name: String,
     base_url: String,
 }
 
@@ -113,7 +112,7 @@ impl Requestor {
         let response = match response {
             Ok(response) => response,
             Err(e) => {
-                warn!("ServerError {}: {e:?}", self.host.host_name);
+                error!("server error: {e:?}");
                 return Err(ResponseError::ServerError);
             }
         };
@@ -127,10 +126,7 @@ impl Requestor {
         let mut measurements: Vec<Measurement> = match serde_json::from_str(&content) {
             Ok(measurements) => measurements,
             Err(e) => {
-                println!(
-                    "Group: {}\tError: {:?}\nContent: {}",
-                    self.host.host_name, e, content
-                );
+                error!("deserialization error: {e:?}; query: {url:?}; response body: {content}");
                 return Err(ResponseError::DeserializationError);
             }
         };
@@ -142,10 +138,8 @@ impl Requestor {
             .expect("Valid start and end times");
 
         if measurements_cmp != measurements {
-            println!(
-                "Group: {}\nQuery: {:?}\nGround truth: {}\nReceived: {}",
-                self.host.host_name,
-                url,
+            error!(
+                "validation error; query: {url:?}; ground truth: {}; response body: {}",
                 serde_json::to_string(&measurements_cmp).unwrap(),
                 serde_json::to_string(&measurements).unwrap(),
             );
@@ -194,7 +188,7 @@ impl Requestor {
         let response = match response {
             Ok(response) => response,
             Err(e) => {
-                warn!("ServerError {}: {e:?}", self.host.host_name);
+                error!("server error: {e:?}");
                 return Err(ResponseError::ServerError);
             },
         };
@@ -208,10 +202,7 @@ impl Requestor {
         let mut measurements: Vec<Measurement> = match serde_json::from_str(&content) {
             Ok(measurements) => measurements,
             Err(e) => {
-                println!(
-                    "Group: {}\tError: {:?}\nContent: {}",
-                    self.host.host_name, e, content
-                );
+                error!("deserialization error; {e:?}; query: {url:?}; response body: {content}");
                 return Err(ResponseError::DeserializationError);
             }
         };
@@ -228,10 +219,8 @@ impl Requestor {
         let experiment_read = experiment.read().await;
         let measurements_cmp = experiment_read.get_cached_out_of_bounds().unwrap();
         if measurements_cmp != measurements {
-            println!(
-                "Group: {}\nQuery: {:?}\nGround truth: {}\nReceived: {}",
-                self.host.host_name,
-                url,
+            error!(
+                "validation error; query: {url:?}; ground truth: {}; response body: {}",
                 serde_json::to_string(&measurements_cmp).unwrap(),
                 serde_json::to_string(&measurements).unwrap()
             );

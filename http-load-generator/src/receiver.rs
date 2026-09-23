@@ -1,4 +1,5 @@
 use async_broadcast::broadcast;
+use tracing::{span, Instrument, Level};
 use clap::ArgMatches;
 use futures::future;
 use rand::Rng;
@@ -104,8 +105,14 @@ impl ExperimentReceiver {
                 metrics.clone(),
             );
 
+            let host_name = host.host_name.clone();
             tokio::spawn(async move {
-                requestor.start().await;
+                let span = span!(
+                    Level::INFO,
+                    "http-generator",
+                    host=host_name,
+                );
+                requestor.start().instrument(span).await;
             });
         }
     }
