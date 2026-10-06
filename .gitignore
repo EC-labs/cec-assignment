@@ -13,3 +13,7 @@ files/
 .DS_Store
 tests/
 test_notifier*
+learning/
+venv/
+.vscode/
+.python-version
