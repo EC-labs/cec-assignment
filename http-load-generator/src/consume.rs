@@ -7,6 +7,7 @@ use rdkafka::{
     consumer::{CommitMode, Consumer, ConsumerContext, Rebalance},
     message::Message,
 };
+use rand::{distributions::Alphanumeric, Rng};
 use tokio::{
     sync::mpsc::Sender,
     time::{self, Duration},
@@ -35,7 +36,18 @@ pub struct ConsumeConfiguration {
 impl From<&mut ArgMatches> for ConsumeConfiguration {
     fn from(args: &mut ArgMatches) -> Self {
         let brokers = args.remove_one::<String>("broker-list").expect("Required");
-        let group_id = args.remove_one::<String>("group-id").expect("Required");
+        let group_id = args.remove_one::<String>("group-id").or({
+            let rnd_chars: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(16)
+                .map(char::from)
+                .collect();
+            let id = format!("http-load-generator-{rnd_chars}");
+            Some(id)
+
+        }).expect("Missing group-id from option").into();
+
+        info!("using consumer.group.id `{group_id}`");
         let topic = args.remove_one::<String>("topic").expect("Required");
         let wait_before_tx = args
             .remove_one::<u8>("consumer-wait-before-send")
@@ -61,6 +73,7 @@ impl Consume {
         let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
             .set("group.id", config.group_id.as_str())
             .set("bootstrap.servers", config.brokers.as_str())
+            .set("auto.offset.reset", "latest")
             .set("enable.partition.eof", "false")
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "true")

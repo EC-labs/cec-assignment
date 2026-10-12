@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .action(ArgAction::Set)
         )
         .arg(Arg::new("group-id")
-            .required(true)
+            .required(false)
             .long("group-id")
             .env("GROUP_ID")
             .action(ArgAction::Set)
