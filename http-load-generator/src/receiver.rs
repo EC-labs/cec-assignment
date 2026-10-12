@@ -1,5 +1,5 @@
 use async_broadcast::broadcast;
-use tracing::{span, Instrument, Level};
+use tracing::{span, debug, Instrument, Level};
 use clap::ArgMatches;
 use futures::future;
 use rand::Rng;
@@ -32,9 +32,8 @@ impl BatchSize {
 pub struct ExperimentReceiverConfig {
     hosts: Vec<Host>,
     requestor_config: RequestorConfiguration,
-    batch_size: BatchSize,
     stable_rate: u16,
-    num_generations: u8,
+    generation_batches: Vec<u16>,
 }
 
 impl From<&mut ArgMatches> for ExperimentReceiverConfig {
@@ -52,14 +51,28 @@ impl From<&mut ArgMatches> for ExperimentReceiverConfig {
         let stable_rate = args
             .remove_one::<u16>("stable-rate-duration")
             .expect("Required");
-        let num_generations = args.remove_one::<u8>("num-generations").expect("Required");
+        let generation_batches = match args.remove_many::<u16>("generation-batches") {
+            Some(generation_batches) => generation_batches.collect::<Vec<u16>>(),
+            None => {
+                let mut generation_batches = vec![];
+                let num_generations = args.remove_one::<u8>("num-generations").expect("num-generations cannot be null when generation-batches is unset");
+                for _ in 0..num_generations {
+                    let batch_size = {
+                        let mut rng = rand::thread_rng();
+                        rng.gen_range(batch_size.min..batch_size.max)
+                    };
+                    generation_batches.push(batch_size);
+                }
+                generation_batches
+            }
+        };
+        debug!("generation batches: {generation_batches:?}");
         let requestor_config = RequestorConfiguration::from(args);
         Self {
             requestor_config,
             hosts,
-            batch_size,
             stable_rate,
-            num_generations,
+            generation_batches,
         }
     }
 }
@@ -133,16 +146,13 @@ impl ExperimentReceiver {
         // Each iteration receives messages and generates load for the next minute
         // Sleep for 60 seconds after generating all the requests, if there are new experiments, read
         // them and generate the load, otherwise just generate the load with the experiments available.
-        for _ in 0..self.config.num_generations {
+
+        for batch_size in std::mem::replace(&mut self.config.generation_batches, vec![]) {
             self.receive_experiments().await;
             let mut handles = vec![];
             handles.push(tokio::spawn(async move {
                 time::sleep(Duration::from_millis(self.config.stable_rate as u64 * 1000)).await;
             }));
-            let batch_size = {
-                let mut rng = rand::thread_rng();
-                rng.gen_range(self.config.batch_size.min..self.config.batch_size.max)
-            };
             handles.append(
                 &mut (0..self.config.stable_rate)
                     .map(|_| {

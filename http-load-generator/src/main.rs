@@ -164,6 +164,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .value_parser(value_parser!(u8))
             .help("The number of generate iterations to perform.\n\nE.g.:\nIf `--num-generations 2` and `--stable-rate duration 60`, then `60*2` batches of queries would be performed.")
         )
+        .arg(
+            Arg::new("generation-batches")
+                .required(true)
+                .long("generation-batches")
+                .env("GENERATION_BATCHES")
+                .action(ArgAction::Append)
+                .value_delimiter(',')
+                .value_parser(value_parser!(u16))
+                .conflicts_with("num-generations")
+                .help("Comma-separated list of batch sizes for each generation. E.g.: 50,80,100"),
+        )
         .get_matches();
 
     let consume_config = ConsumeConfiguration::from(&mut matches);
