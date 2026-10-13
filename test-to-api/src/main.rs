@@ -120,13 +120,6 @@ impl Api {
 async fn main() {
     let mut matches = command!() // requires `cargo` feature
         .next_line_help(true)
-        .arg(Arg::new("secret-key")
-            .required(false)
-            .long("secret-key")
-            .action(ArgAction::Set)
-            .default_value("QJUHsPhnA0eiqHuJqsPgzhDozYO4f1zh")
-            .help("<key> is a 32 character string that must match the key being passed to the notifications-service")
-        )
         .arg(Arg::new("broker-list")
             .required(true)
             .action(ArgAction::Set)

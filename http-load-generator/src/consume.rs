@@ -30,6 +30,7 @@ pub struct ConsumeConfiguration {
     wait_before_tx: u8,
     group_id: String,
     brokers: String,
+    auto_offset_reset: String,
     topic: String,
 }
 
@@ -52,11 +53,13 @@ impl From<&mut ArgMatches> for ConsumeConfiguration {
         let wait_before_tx = args
             .remove_one::<u8>("consumer-wait-before-send")
             .expect("Required");
+        let auto_offset_reset = args.remove_one::<String>("auto-offset-reset").expect("Missing auto-offset-reset default value");
 
         ConsumeConfiguration {
             group_id,
             brokers,
             topic,
+            auto_offset_reset,
             wait_before_tx,
         }
     }
@@ -73,7 +76,10 @@ impl Consume {
         let consumer: StreamConsumer<CustomContext> = ClientConfig::new()
             .set("group.id", config.group_id.as_str())
             .set("bootstrap.servers", config.brokers.as_str())
-            .set("auto.offset.reset", "latest")
+            .set(
+                "auto.offset.reset",
+                config.auto_offset_reset.as_str()
+            )
             .set("enable.partition.eof", "false")
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "true")

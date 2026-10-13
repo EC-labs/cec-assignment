@@ -1,5 +1,5 @@
 use async_broadcast::Receiver;
-use tracing::error;
+use tracing::debug;
 use clap::ArgMatches;
 use futures::{stream, StreamExt};
 use reqwest::{Client, Error, RequestBuilder, Response};
@@ -112,7 +112,7 @@ impl Requestor {
         let response = match response {
             Ok(response) => response,
             Err(e) => {
-                error!("server error: {e:?}");
+                debug!("server error: {e:?}");
                 return Err(ResponseError::ServerError);
             }
         };
@@ -125,8 +125,12 @@ impl Requestor {
 
         let mut measurements: Vec<Measurement> = match serde_json::from_str(&content) {
             Ok(measurements) => measurements,
-            Err(e) => {
-                error!("deserialization error: {e:?}; query: {url:?}; response body: {content}");
+            Err(_) => {
+                debug!(
+                    error_type="deserialization error",
+                    url=format!("{url}"),
+                    response_body=content
+                );
                 return Err(ResponseError::DeserializationError);
             }
         };
@@ -138,10 +142,11 @@ impl Requestor {
             .expect("Valid start and end times");
 
         if measurements_cmp != measurements {
-            error!(
-                "validation error; query: {url:?}; ground truth: {}; response body: {}",
-                serde_json::to_string(&measurements_cmp).unwrap(),
-                serde_json::to_string(&measurements).unwrap(),
+            debug!(
+                error_type="validation error",
+                url=format!("{url}"),
+                ground_truth=serde_json::to_string(&measurements_cmp).unwrap(),
+                repsonse_body=serde_json::to_string(&measurements).unwrap(),
             );
             Err(ResponseError::ValidationError)
         } else {
@@ -188,7 +193,7 @@ impl Requestor {
         let response = match response {
             Ok(response) => response,
             Err(e) => {
-                error!("server error: {e:?}");
+                debug!("server error: {e:?}");
                 return Err(ResponseError::ServerError);
             },
         };
@@ -201,8 +206,12 @@ impl Requestor {
 
         let mut measurements: Vec<Measurement> = match serde_json::from_str(&content) {
             Ok(measurements) => measurements,
-            Err(e) => {
-                error!("deserialization error; {e:?}; query: {url:?}; response body: {content}");
+            Err(_) => {
+                debug!(
+                    error_type="deserialization error",
+                    url=format!("{url}"),
+                    response_body=content
+                );
                 return Err(ResponseError::DeserializationError);
             }
         };
@@ -219,10 +228,11 @@ impl Requestor {
         let experiment_read = experiment.read().await;
         let measurements_cmp = experiment_read.get_cached_out_of_bounds().unwrap();
         if measurements_cmp != measurements {
-            error!(
-                "validation error; query: {url:?}; ground truth: {}; response body: {}",
-                serde_json::to_string(&measurements_cmp).unwrap(),
-                serde_json::to_string(&measurements).unwrap()
+            debug!(
+                error_type="validation error",
+                url=format!("{url}"),
+                ground_truth=serde_json::to_string(&measurements_cmp).unwrap(),
+                repsonse_body=serde_json::to_string(&measurements).unwrap(),
             );
             Err(ResponseError::ValidationError)
         } else {

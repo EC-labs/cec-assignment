@@ -158,7 +158,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .help("The number of seconds during which the rate at which the queries are performed to each host remains stable.")
         )
         .arg(Arg::new("num-generations")
-            .required(true)
+            .required(false)
             .long("num-generations")
             .action(ArgAction::Set)
             .value_parser(value_parser!(u8))
@@ -166,7 +166,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("generation-batches")
-                .required(true)
+                .required(false)
                 .long("generation-batches")
                 .env("GENERATION_BATCHES")
                 .action(ArgAction::Append)
@@ -174,6 +174,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .value_parser(value_parser!(u16))
                 .conflicts_with("num-generations")
                 .help("Comma-separated list of batch sizes for each generation. E.g.: 50,80,100"),
+        )
+        .arg(
+            Arg::new("auto-offset-reset")
+                .required(false)
+                .long("auto-offset-reset")
+                .env("AUTO_OFFSET_RESET")
+                .default_value("latest")
+                .help("Consumer auto.offset.reset configuration parameter"),
         )
         .get_matches();
 
