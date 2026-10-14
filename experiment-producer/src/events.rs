@@ -353,6 +353,7 @@ impl KafkaTopicProducer {
             .set("bootstrap.servers", brokers)
             .set("message.timeout.ms", "5000")
             .set("linger.ms", "100")
+            .set("compression.type", "lz4")
             .set("queue.buffering.max.kbytes", "8388608")
             .set("queue.buffering.max.messages", "1000000");
 
