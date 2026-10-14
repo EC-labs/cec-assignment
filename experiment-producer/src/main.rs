@@ -1,16 +1,18 @@
 use ::time::{format_description, UtcOffset};
 use clap::{builder::FalseyValueParser, command, value_parser, Arg, ArgAction, ArgMatches};
 use futures::future;
+use futures_lite::stream::StreamExt;
 use sqlx::{
     postgres::{PgPoolOptions, Postgres},
     Pool,
 };
-use std::{env, fs::{self, create_dir_all}, path::Path};
+use std::{env, fs::{create_dir_all}, path::Path};
 use tokio::time::{self as tktime, Duration};
 use tracing::{info, span, Instrument, Level};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{filter::LevelFilter, fmt::time::OffsetTime, prelude::*, EnvFilter};
 use anyhow::{Context, Result};
+use async_signal::{Signal, Signals};
 
 mod config;
 mod database;
@@ -297,6 +299,7 @@ async fn main() -> Result<()> {
     dotenv::from_filename("experiment-producer/.env").expect(".env file should exist");
     let mut matches = configure_cli();
     let _guard = configure_tracing(matches.remove_one::<bool>("file-subscriber").unwrap())?;
+    let mut signals = Signals::new([Signal::Int, Signal::Term]).expect("Failed to register signals");
 
     let pool = match env::var("DATABASE_URL") {
         Ok(database_url) => {
@@ -317,10 +320,22 @@ async fn main() -> Result<()> {
     let metric_server = MetricServer::new(metrics.clone());
     metric_server.start();
 
-    if let Some(config_file) = matches.remove_one::<String>("config-file") {
-        run_multiple_experiments(matches, &config_file, pool, metrics).await
+    let run_handle = if let Some(config_file) = matches.remove_one::<String>("config-file") {
+        tokio::spawn(async move { run_multiple_experiments(matches, &config_file, pool, metrics).await })
     } else {
-        run_single_experiment(matches, pool, metrics).await
+        tokio::spawn(run_single_experiment(matches, pool, metrics))
+    };
+
+    let signal_handle = tokio::spawn(async move {
+        if let Some(signal) = signals.next().await {
+            info!("received {signal:?}. Terminating");
+        };
+    });
+
+    tokio::select! {
+        _ = signal_handle => {}
+        _ = run_handle => {}
     }
+
     Ok(())
 }

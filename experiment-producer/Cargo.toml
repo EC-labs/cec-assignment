@@ -27,3 +27,5 @@ tracing-subscriber = { version = "0.3", features=["local-time", "time", "fmt", "
 tracing-appender = "0.2.2"
 
 event-hash = { path = "../event-hash" }
+async-signal = "0.2.14"
+futures-lite = "2.6.1"
