@@ -5,7 +5,7 @@ use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::time::{Duration, Instant};
 use tokio::{task::JoinHandle, time};
-use tracing::{debug, info, Instrument, Span};
+use tracing::{debug, error, info, Instrument, Span};
 use uuid::Uuid;
 
 use event_hash::NotificationType;
@@ -226,7 +226,8 @@ impl Experiment {
         self.producer
             .send_event(record, &self.config.topic)
             .await
-            .expect("Failed to produce message");
+            .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+            .ok();
     }
 
     async fn stage_stabilization(&mut self) {
@@ -241,7 +242,8 @@ impl Experiment {
         self.producer
             .send_event(record, &self.config.topic)
             .await
-            .expect("Failed to produce message");
+            .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+            .ok();
 
         // Stabilization Temperature Samples
         let stabilization_samples = self
@@ -285,7 +287,8 @@ impl Experiment {
         self.producer
             .send_event(record, &self.config.topic)
             .await
-            .expect("Failed to produce message");
+            .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+            .ok();
 
         let carry_out_samples = self
             .sample
@@ -324,7 +327,8 @@ impl Experiment {
         self.producer
             .send_event(record, &self.config.topic)
             .await
-            .expect("Failed to produce message");
+            .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+            .ok();
 
         if let Some(topic_document) = &self.config.topic_document {
             let record = RecordData {
@@ -339,7 +343,8 @@ impl Experiment {
             self.producer
                 .send_event(record, topic_document)
                 .await
-                .expect("Failed to produce message");
+                .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+                .ok();
         }
     }
 
@@ -419,7 +424,8 @@ impl Measurement {
                         producer
                             .send_event(record, &topic)
                             .await
-                            .expect("Failed to produce message");
+                            .map_err(|(err, _)| error!(%err, "Failed to produce message"))
+                            .ok();
                     }
                     .instrument(span.clone()),
                 )

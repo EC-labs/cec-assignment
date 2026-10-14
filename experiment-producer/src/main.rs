@@ -89,6 +89,12 @@ async fn run_multiple_experiments(
     metrics: Metrics,
 ) {
     let config = ConfigFile::from_file(config_file);
+    // A single librdkafka client shared by all experiments; clones share its connections
+    let topic_producer = KafkaTopicProducer::new(
+        matches.get_one::<String>("broker-list").expect("required"),
+        metrics.clone(),
+        !*matches.get_one::<bool>("no-ssl").unwrap(),
+    );
     let mut handles = vec![];
     for mut entry in config.0 {
         let start_temperature = entry.start_temperature;
@@ -101,11 +107,7 @@ async fn run_multiple_experiments(
                 .map(|topic| topic.as_str()),
         );
         let experiment_config = ExperimentConfiguration::from(entry);
-        let topic_producer = KafkaTopicProducer::new(
-            matches.get_one::<String>("broker-list").expect("required"),
-            metrics.clone(),
-            !*matches.get_one::<bool>("no-ssl").unwrap(),
-        );
+        let topic_producer = topic_producer.clone();
 
         let span = span!(
             Level::INFO,
