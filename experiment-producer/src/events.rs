@@ -347,15 +347,18 @@ pub struct KafkaTopicProducer {
 }
 
 impl KafkaTopicProducer {
-    pub fn new(brokers: &str, metrics: Metrics, use_ssl: bool) -> Self {
+    pub fn new(brokers: &str, metrics: Metrics, use_ssl: bool, use_lz4: bool) -> Self {
         let mut client_config = ClientConfig::new();
         client_config
             .set("bootstrap.servers", brokers)
             .set("message.timeout.ms", "5000")
             .set("linger.ms", "100")
-            .set("compression.type", "lz4")
             .set("queue.buffering.max.kbytes", "8388608")
             .set("queue.buffering.max.messages", "1000000");
+
+        if use_lz4 {
+            client_config.set("compression.type", "lz4");
+        }
 
         if use_ssl {
             info!("Client configured with SSL");
