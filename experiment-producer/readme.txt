@@ -27,6 +27,8 @@ Options:
           [default: 25.5]
       --upper-threshold <upper-threshold>
           [default: 26.5]
+      --disable-lz4
+          Disable LZ4 compression of produced messages (enabled by default)
   -h, --help
           Print help
   -V, --version

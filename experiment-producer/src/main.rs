@@ -37,6 +37,7 @@ async fn run_single_experiment(
             .expect("required"),
         metrics.clone(),
         !matches.remove_one::<bool>("no-ssl").unwrap(),
+        !matches.remove_one::<bool>("disable-lz4").unwrap(),
     );
 
     let experiment_config = ExperimentConfiguration::new(
@@ -96,6 +97,7 @@ async fn run_multiple_experiments(
         matches.get_one::<String>("broker-list").expect("required"),
         metrics.clone(),
         !*matches.get_one::<bool>("no-ssl").unwrap(),
+        !*matches.get_one::<bool>("disable-lz4").unwrap(),
     );
     let mut handles = vec![];
     for mut entry in config.0 {
@@ -290,6 +292,15 @@ fn configure_cli() -> ArgMatches {
                 .default_value("false")
                 .value_parser(FalseyValueParser::new())
                 .help("Producer connects with broker with SSL protocol"),
+        )
+        .arg(
+            Arg::new("disable-lz4")
+                .required(false)
+                .long("disable-lz4")
+                .action(ArgAction::SetTrue)
+                .default_value("false")
+                .value_parser(FalseyValueParser::new())
+                .help("Disable LZ4 compression of produced messages"),
         )
         .get_matches()
 }
